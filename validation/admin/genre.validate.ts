@@ -5,6 +5,7 @@ export const createPOST = async (req:Request,res:Response, next:NextFunction)=>{
       code: "400",
       message: "Please enter a title"
     })
+    return;
   }
   next();
 }

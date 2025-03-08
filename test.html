@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <input type="file">
+  <button>send</button>
+  <script>
+    const button = document.querySelector("button");
+    button.addEventListener("click", ()=>{
+      const fileImage = document.querySelector("input").files[0];
+      const formData = new FormData();
+      formData.append("thumbnail", fileImage);
+      formData.append("title", "testTitle1");
+      formData.append("description", "des test")
+      fetch("http://localhost:3000/admin/genre/create",{
+        method: "POST",
+        body: formData
+      }).then(res=>res.json()).then(data=>{console.log(data)});
+    })
+  </script>
+</body>
+</html>

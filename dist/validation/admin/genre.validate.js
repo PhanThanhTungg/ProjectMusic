@@ -16,6 +16,7 @@ const createPOST = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
             code: "400",
             message: "Please enter a title"
         });
+        return;
     }
     next();
 });

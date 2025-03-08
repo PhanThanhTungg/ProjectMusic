@@ -21,3 +21,32 @@ export const createPOST = async (req:Request,res:Response):Promise<void>=>{
     })
   }
 }
+
+export const indexGET = async (req:Request,res:Response):Promise<void>=>{
+  try {
+    const find = {
+      deleted: false
+    }
+
+    if(req.query.status) find["status"] = req.query.status;
+
+    const sort = {};
+    if(req.query.sortKey && req.query.sortValue){
+      sort[`${req.query.sortKey}`] = req.query.sortValue;
+    }
+
+    
+
+    const genres = await genreModel.find(find).sort(sort);
+    res.json({
+      code: 200,
+      data: genres
+    })
+  } catch (error) {
+    res.json({
+      code: 400,
+      message: error,
+    })
+  }
+
+}

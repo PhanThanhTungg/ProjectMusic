@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createPOST = void 0;
+exports.indexGET = exports.createPOST = void 0;
 const genre_model_1 = __importDefault(require("../../model/genre.model"));
 const createPOST = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -36,3 +36,28 @@ const createPOST = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.createPOST = createPOST;
+const indexGET = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const find = {
+            deleted: false
+        };
+        if (req.query.status)
+            find["status"] = req.query.status;
+        const sort = {};
+        if (req.query.sortKey && req.query.sortValue) {
+            sort[`${req.query.sortKey}`] = req.query.sortValue;
+        }
+        const genres = yield genre_model_1.default.find(find).sort(sort);
+        res.json({
+            code: 200,
+            data: genres
+        });
+    }
+    catch (error) {
+        res.json({
+            code: 400,
+            message: error,
+        });
+    }
+});
+exports.indexGET = indexGET;
