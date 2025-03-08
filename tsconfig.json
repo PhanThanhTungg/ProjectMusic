@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "outDir": "js", // Biên dịch vào thư mục js
+    "outDir": "dist", // Biên dịch vào thư mục js
     "target": "ES6", // cho phép biên dịch sang kiểu es6
     "module": "commonjs", // commonjs là tiêu chuẩn làm việc trong nodejs để làm việc với module
     "removeComments": true, // xóa comment khi biên dịch sang code js
