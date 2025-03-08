@@ -12,7 +12,8 @@
   "dependencies": {
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "mongoose": "^8.12.1"
+    "mongoose": "^8.12.1",
+    "mongoose-slug-generator": "^1.0.4"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
