@@ -10,8 +10,8 @@ const genreSchema = new mongoose.Schema({
     slug: "title"
   },
   status:{
-    type: Boolean,
-    default: true
+    type: String,
+    default: "active"
   },
   deleted: {
     type: Boolean,
