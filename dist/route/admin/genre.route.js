@@ -42,8 +42,7 @@ const controller = __importStar(require("../../controller/admin/genre.controller
 const genreValidation = __importStar(require("../../validation/admin/genre.validate"));
 const uploadCloud_middleware_1 = require("../../middleware/admin/uploadCloud.middleware");
 const multer_1 = __importDefault(require("multer"));
-const storage = multer_1.default.memoryStorage();
-const upload = (0, multer_1.default)({ storage: storage });
+const upload = (0, multer_1.default)();
 route.get("/", controller.indexGET);
 route.post("/create", upload.single("thumbnail"), uploadCloud_middleware_1.uploadSingle, genreValidation.createPOST, controller.createPOST);
 exports.default = route;
