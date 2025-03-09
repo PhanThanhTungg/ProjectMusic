@@ -16,7 +16,7 @@
       formData.append("thumbnail", fileImage);
       formData.append("title", "testTitle1");
       formData.append("description", "des test")
-      fetch("https://project-music-rose.vercel.app/admin/genre/create",{
+      fetch("https://project-music-git-main-phantung03s-projects.vercel.app/admin/genre/create",{
         method: "POST",
         body: formData
       }).then(res=>res.json()).then(data=>{console.log(data)});
