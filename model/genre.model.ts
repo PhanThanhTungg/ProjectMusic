@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import slug from "mongoose-slug-generator";
 mongoose.plugin(slug);
+
 const genreSchema = new mongoose.Schema({
   title: String,
   thumbnail: String,

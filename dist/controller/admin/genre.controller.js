@@ -17,11 +17,12 @@ const genre_model_1 = __importDefault(require("../../model/genre.model"));
 const pagination_helper_1 = __importDefault(require("../../helper/pagination.helper"));
 const createPOST = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const genre = new genre_model_1.default({
+        const genreData = {
             title: req.body.title,
             thumbnail: req.body.thumbnail,
             description: req.body.description
-        });
+        };
+        const genre = new genre_model_1.default(genreData);
         yield genre.save();
         res.json({
             code: 200,
@@ -48,8 +49,8 @@ const indexGET = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (req.query.sortKey && req.query.sortValue) {
             sort[`${req.query.sortKey}`] = req.query.sortValue;
         }
-        const currentPage = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || 8;
+        const currentPage = +req.query.page || 1;
+        const limit = +req.query.limit || 8;
         const objectPagination = (0, pagination_helper_1.default)(currentPage, limit, yield genre_model_1.default.countDocuments(find));
         const genres = yield genre_model_1.default.find(find).sort(sort)
             .skip(objectPagination["skip"]).limit(objectPagination["limit"]);

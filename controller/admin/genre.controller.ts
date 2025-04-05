@@ -3,11 +3,12 @@ import genreModel from "../../model/genre.model";
 import paginationHelper from "../../helper/pagination.helper";
 export const createPOST = async (req:Request,res:Response):Promise<void>=>{
   try {
-    const genre = new genreModel({
+    const genreData = {
       title: req.body.title,
       thumbnail: req.body.thumbnail,
       description: req.body.description
-    })
+    }
+    const genre = new genreModel(genreData);
     await genre.save();
     res.json({
       code: 200,
@@ -36,8 +37,8 @@ export const indexGET = async (req:Request,res:Response):Promise<void>=>{
       sort[`${req.query.sortKey}`] = req.query.sortValue;
     }
 
-    const currentPage:number = Number(req.query.page) || 1;
-    const limit:number = Number(req.query.limit) || 8;
+    const currentPage:number = +req.query.page || 1;
+    const limit:number = +req.query.limit || 8;
     const objectPagination  = paginationHelper(currentPage, limit, await genreModel.countDocuments(find));
     
     const genres = await genreModel.find(find).sort(sort)
