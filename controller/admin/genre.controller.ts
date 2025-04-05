@@ -23,7 +23,6 @@ export const createPOST = async (req:Request,res:Response):Promise<void>=>{
     })
   }
 }
-
 export const indexGET = async (req:Request,res:Response):Promise<void>=>{
   try {
     const find = {
