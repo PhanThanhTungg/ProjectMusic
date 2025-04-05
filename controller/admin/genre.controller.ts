@@ -15,7 +15,6 @@ export const createPOST = async (req:Request,res:Response):Promise<void>=>{
       message: "create genre successfully",
       data: genre
     })
-
   } catch (error) {
     res.json({
       code: 400,
