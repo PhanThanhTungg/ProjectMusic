@@ -28,7 +28,7 @@ const indexGET = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.indexGET = indexGET;
 const createPOST = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { title, thumbnail, background, description, lyrics, audio } = req.body;
+        const { title, thumbnail, background, description, lyrics, audio, } = req.body;
         const song = new song_model_1.default({ title, thumbnail, background, description, lyrics, audio });
         yield song.save();
         res.json({

@@ -15,7 +15,7 @@ export const indexGET = async (req: Request, res: Response): Promise<void> => {
 
 export const createPOST = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { title, thumbnail, background, description, lyrics, audio } = req.body;
+    const { title, thumbnail, background, description, lyrics, audio,  } = req.body;
     const song = new songModel({ title, thumbnail, background, description, lyrics, audio });
     await song.save();
     res.json({

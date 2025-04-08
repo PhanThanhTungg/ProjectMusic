@@ -16,6 +16,8 @@ const connect_config_1 = require("./config/connect.config");
 (0, connect_config_1.connectToDatabase)();
 const index_route_1 = __importDefault(require("./route/admin/index.route"));
 (0, index_route_1.default)(app);
+const index_route_2 = __importDefault(require("./route/client/index.route"));
+(0, index_route_2.default)(app);
 const port = +process.env.PORT;
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);

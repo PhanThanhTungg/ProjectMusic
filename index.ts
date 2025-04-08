@@ -18,6 +18,9 @@ connectToDatabase();
 import adminRoute from "./route/admin/index.route";
 adminRoute(app);
 
+import clientRoute from "./route/client/index.route";
+clientRoute(app);
+
 
 const port:number = +process.env.PORT;
 app.listen(port, () => {
