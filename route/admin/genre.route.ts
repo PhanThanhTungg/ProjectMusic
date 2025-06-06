@@ -7,7 +7,7 @@ import {uploadSingle} from "../../middleware/admin/uploadCloud.middleware";
 import multer from "multer";
 const upload: multer.Multer = multer();
 
-route.get("/", controller.indexGET)
+route.get("/",controller.indexGET)
 
 route.post("/create",
   upload.single("thumbnail"),
