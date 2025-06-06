@@ -18,6 +18,10 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
+
+import cookieParser from 'cookie-parser';
+app.use(cookieParser());
+
 import {connectToDatabase} from "./config/connect.config";
 connectToDatabase();
 
