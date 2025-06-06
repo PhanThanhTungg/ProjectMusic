@@ -5,7 +5,7 @@ export const saveCookie = (res:any, type:string, token:string):void => {
     httpOnly: true,
     // secure: process.env.NODE_ENV === "production",
     secure: false,
-    sameSite: "lax",
+    sameSite: "strict",
     maxAge: +process.env.COOKIE_HTTP_ONLY_EXPIRE * 24 * 60 * 60 * 1000,
     path: "/"
   });

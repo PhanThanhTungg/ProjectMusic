@@ -1,12 +1,13 @@
 import jwt from "jsonwebtoken";
+import { ObjectId } from "mongoose";
 
-export const genAccessToken = (id:string):string =>{
-  const accessToken:string = jwt.sign({id}, process.env.ACCESS_TOKEN_SECRET,{expiresIn: process.env.ACCESS_TOKEN_SECRET_EXPIRE})
+export const genAccessToken = (id:string, type: "admin"|"user"):string =>{
+  const accessToken:string = jwt.sign({id, type}, process.env.ACCESS_TOKEN_SECRET,{expiresIn: process.env.ACCESS_TOKEN_SECRET_EXPIRE})
   return accessToken;
 }
 
-export const genRefreshToken = (id:string):string =>{
-  const refreshToken:string = jwt.sign({id}, process.env.REFRESH_TOKEN_SECRET,{expiresIn: process.env.REFRESH_TOKEN_SECRET_EXPIRE})
+export const genRefreshToken = (id:string, type: "admin"|"user"):string =>{
+  const refreshToken:string = jwt.sign({id, type}, process.env.REFRESH_TOKEN_SECRET,{expiresIn: process.env.REFRESH_TOKEN_SECRET_EXPIRE})
   return refreshToken;
 }
 
