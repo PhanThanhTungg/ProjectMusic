@@ -37,8 +37,8 @@ const uploadSingle = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
     if (req["file"]) {
         function upload(req) {
             return __awaiter(this, void 0, void 0, function* () {
-                let result = yield streamUpload(req.file.buffer);
-                req.body[req.file.fieldname] = result["secure_url"];
+                let result = yield streamUpload(req["file"].buffer);
+                req.body[req["file"].fieldname] = result["secure_url"];
             });
         }
         yield upload(req);

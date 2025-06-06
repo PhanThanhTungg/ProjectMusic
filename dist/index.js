@@ -6,7 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const app = (0, express_1.default)();
 const cors_1 = __importDefault(require("cors"));
-app.use((0, cors_1.default)());
+const corsOrigin = process.env.CORS_ORIGIN == "true" ? true : process.env.CORS_ORIGIN;
+app.use((0, cors_1.default)({
+    origin: corsOrigin,
+    credentials: true,
+}));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const body_parser_1 = __importDefault(require("body-parser"));

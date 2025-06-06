@@ -1,23 +1,14 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createPOST = void 0;
-const createPOST = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const createPOST = (req, res, next) => {
     if (!req.body.title) {
-        res.json({
-            code: "400",
+        const response = {
             message: "Please enter a title"
-        });
+        };
+        res.status(400).json(response);
         return;
     }
     next();
-});
+};
 exports.createPOST = createPOST;

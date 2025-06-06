@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from "express"
-export const createPOST = async (req:Request,res:Response, next:NextFunction)=>{
+import { ErrorRespone } from "../../types/admin/response.type";
+export const createPOST = (req:Request,res:Response, next:NextFunction):void=>{
   if(!req.body.title){
-    res.json({
-      code: "400",
+    const response:ErrorRespone = {
       message: "Please enter a title"
-    })
+    }
+    res.status(400).json(response);
     return;
   }
   next();

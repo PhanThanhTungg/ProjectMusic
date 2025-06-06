@@ -1,12 +1,14 @@
 import { Request, Response } from "express";
 import genreModel from "../../model/genre.model";
 import paginationHelper from "../../helper/pagination.helper";
+import { GenreDataCreate } from "../../types/admin/genre.type";
+
 export const createPOST = async (req:Request,res:Response):Promise<void>=>{
   try {
-    const genreData = {
+    const genreData:GenreDataCreate = {
       title: req.body.title,
-      thumbnail: req.body.thumbnail,
-      description: req.body.description
+      ...(req.body?.thumbnail && { thumbnail: req.body.thumbnail }),
+      ...(req.body?.description && { description: req.body.description })
     }
     const genre = new genreModel(genreData);
     await genre.save();

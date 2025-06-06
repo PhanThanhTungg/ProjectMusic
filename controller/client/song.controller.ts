@@ -9,7 +9,7 @@ export const getAll = async (req: Request, res:Response)=>{
       deleted: false
     })
     res.json({
-      code: 200,
+      code: 200,  
       data: songs
     })
   } catch (error) {resError1(error, res);}

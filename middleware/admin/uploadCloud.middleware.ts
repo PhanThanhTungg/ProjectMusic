@@ -9,7 +9,7 @@ cloudinary.config({
 });
 //end cloudinary
 
-const streamUpload = async (buffer:Buffer) => {
+const streamUpload = async (buffer:Buffer):Promise<any> => {
   return new Promise((resolve, reject) => {
     let stream = cloudinary.uploader.upload_stream(
       (error, result) => {
@@ -24,11 +24,11 @@ const streamUpload = async (buffer:Buffer) => {
   });
 }
 
-export const uploadSingle = async (req: Request, res: Response, next: NextFunction) => {
+export const uploadSingle = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   if (req["file"]) {
-    async function upload(req) {
-      let result = await streamUpload(req.file.buffer);
-      req.body[req.file.fieldname] = result["secure_url"];
+    async function upload(req: Request): Promise<void> {
+      let result = await streamUpload(req["file"].buffer);
+      req.body[req["file"].fieldname] = result["secure_url"];
     }
     await upload(req);
   }

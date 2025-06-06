@@ -16,12 +16,9 @@ exports.indexGET = exports.createPOST = void 0;
 const genre_model_1 = __importDefault(require("../../model/genre.model"));
 const pagination_helper_1 = __importDefault(require("../../helper/pagination.helper"));
 const createPOST = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     try {
-        const genreData = {
-            title: req.body.title,
-            thumbnail: req.body.thumbnail,
-            description: req.body.description
-        };
+        const genreData = Object.assign(Object.assign({ title: req.body.title }, (((_a = req.body) === null || _a === void 0 ? void 0 : _a.thumbnail) && { thumbnail: req.body.thumbnail })), (((_b = req.body) === null || _b === void 0 ? void 0 : _b.description) && { description: req.body.description }));
         const genre = new genre_model_1.default(genreData);
         yield genre.save();
         res.json({

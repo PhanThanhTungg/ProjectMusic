@@ -2,7 +2,13 @@ import express,{ Express } from "express";
 const app:Express = express();
 
 import cors from "cors";
-app.use(cors());
+const corsOrigin:string | boolean = process.env.CORS_ORIGIN == "true" ? true : process.env.CORS_ORIGIN;
+app.use(cors(
+  {
+    origin: corsOrigin,
+    credentials: true,
+  }
+));
 
 import dotenv from "dotenv";
 dotenv.config();

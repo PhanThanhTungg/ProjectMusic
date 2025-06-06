@@ -1,10 +1,6 @@
-interface Pagination{
-  page: number,
-  limit: number,
-  skip: number,
-  totalPage: number
-}
-export default (currentPage:number, limit:number, total:number):object=>{
+import { Pagination } from "../types/admin/common.type";
+
+export default (currentPage:number, limit:number, total:number):Pagination=>{
   const objectPagination:Pagination = {
     page: currentPage,
     limit: limit,
