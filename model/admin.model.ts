@@ -14,8 +14,7 @@ const adminSchema = new mongoose.Schema({
     unique: true
   },
   avatar: {
-    type: String,
-    default: "https://www.svgrepo.com/show/452030/avatar-default.svg",
+    type: String
   },
   email: {
     type: String,

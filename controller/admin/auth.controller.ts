@@ -35,7 +35,8 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     const response: AuthLoginSuccess = {
       message: "Login successful",
       accessToken,
-      admin: {
+      user: {
+        type: "admin",
         id: admin._id.toString(),
         avatar: admin.avatar,
         name: admin.name,
@@ -118,7 +119,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<any> =>
     saveCookie(res, "adminRefreshToken", newRefreshToken);
 
     // respond
-    const response: Omit<AuthLoginSuccess, "admin"> = {
+    const response: Omit<AuthLoginSuccess, "user"> = {
       message: "Access token refreshed successfully",
       accessToken: newAccessToken
     };
