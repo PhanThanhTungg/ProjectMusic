@@ -13,6 +13,10 @@ const adminSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  avatar: {
+    type: String,
+    default: "https://www.svgrepo.com/show/452030/avatar-default.svg",
+  },
   email: {
     type: String,
     required: true,
