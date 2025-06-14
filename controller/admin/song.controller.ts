@@ -22,7 +22,7 @@ export const createPOST = async (req: Request, res: Response): Promise<void> => 
       code: 200,
       data: song
     })
-  } catch (error) { resError1(error, res); }
+  } catch (error) { resError1(error, "error",res); }
 }
 
 export const updatePATCH = async (req: Request, res: Response): Promise<void> => {
@@ -36,7 +36,7 @@ export const updatePATCH = async (req: Request, res: Response): Promise<void> =>
       code: 200,
       data: song
     })
-  } catch (error) { resError1(error, res); }
+  } catch (error) { resError1(error, "error",res); }
 }
 
 export const deletePATCH = async (req: Request, res: Response): Promise<void> => {
@@ -45,7 +45,7 @@ export const deletePATCH = async (req: Request, res: Response): Promise<void> =>
     res.json({
       code: 200,
     })
-  } catch (error) { resError1(error, res); }
+  } catch (error) { resError1(error, "error",res); }
 }
 
 export const deleteDELETE = async (req: Request, res: Response): Promise<void> => {
@@ -54,5 +54,5 @@ export const deleteDELETE = async (req: Request, res: Response): Promise<void> =
     res.json({
       code: 200
     })
-  } catch (error) { resError1(error, res); }
+  } catch (error) { resError1(error, "error",res); }
 }
