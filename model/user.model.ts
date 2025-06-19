@@ -24,6 +24,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  songsLiked:[
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "song"
+    }
+  ],
   status: {
     type: String,
     default: "active",

@@ -61,6 +61,8 @@ export const authAccessToken = async (req:Request, res:Response, next: NextFunct
     return res.status(401).json(response);
   }
 
+  res.locals.user = user;
+
   console.log("tokenDecoded", tokenDecoded);
   next();
 }
