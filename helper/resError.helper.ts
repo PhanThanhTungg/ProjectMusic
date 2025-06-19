@@ -1,4 +1,4 @@
-import { ErrorResponse } from "../types/admin/response.type";
+import { ErrorResponse } from "../types/common/response.type";
 
 export const resError1 = (error:any,message: string,res:any)=>{
   console.log("Have error: "+error);

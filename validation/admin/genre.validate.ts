@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express"
-import { ErrorResponse } from "../../types/admin/response.type";
+import { ErrorResponse } from "../../types/common/response.type";
 export const createPOST = (req:Request,res:Response, next:NextFunction):void=>{
   if(!req.body.title){
     const response:ErrorResponse = {

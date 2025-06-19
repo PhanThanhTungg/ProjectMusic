@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import songModel from '../../model/song.model';
 import { resError1 } from '../../helper/resError.helper';
-import { ErrorResponse, SuccessResponse } from '../../types/admin/response.type';
+import { ErrorResponse, SuccessResponse } from '../../types/common/response.type';
 
 export const getAll = async (req: Request, res:Response)=>{
   try {
