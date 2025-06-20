@@ -8,7 +8,7 @@ import { AuthLoginSuccess, tokenDecoded } from "../../types/client/auth.type";
 
 export const register = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { email, name, password } = req.body;
+    const { email, fullName, password } = req.body;
 
     // check email, name, password in database
     const existingUser = await User.findOne({ email });
@@ -23,7 +23,7 @@ export const register = async (req: Request, res: Response): Promise<any> => {
     // create new user
     const newUser = new User({
       email,
-      name,
+      fullName,
       password
     });
     await newUser.save();
@@ -74,7 +74,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
         type: "user",
         id: user._id.toString(),
         avatar: user.avatar,
-        name: user.name,
+        fullName: user.fullName,
         phone: user.phone,
         email: user.email,
       }

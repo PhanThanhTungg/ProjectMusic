@@ -20,7 +20,7 @@ export const login = (req:Request,res:Response, next:NextFunction):any =>{
   next();
 }
 export const register = (req:Request,res:Response, next:NextFunction):any =>{
-  const { email, name , password, rePassword } = req.body;
+  const { email, fullName , password, confirmPassword } = req.body;
   if (!email) {
     const response: ErrorResponse = {
       message: "Email is required",
@@ -29,9 +29,9 @@ export const register = (req:Request,res:Response, next:NextFunction):any =>{
     return res.status(400).json(response);
   }
 
-  if (!name) {
+  if (!fullName) {
     const response: ErrorResponse = {
-      message: "Name is required",
+      message: "FullName is required",
       error: "Bad Request"
     }
     return res.status(400).json(response);
@@ -44,7 +44,7 @@ export const register = (req:Request,res:Response, next:NextFunction):any =>{
     }
     return res.status(400).json(response);
   }
-  if (password !== rePassword) {
+  if (password !== confirmPassword) {
     const response: ErrorResponse = {
       message: "Passwords do not match",
       error: "Bad Request"
