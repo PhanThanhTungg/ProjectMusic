@@ -75,7 +75,6 @@ export const login = async (req: Request, res: Response): Promise<any> => {
         id: user._id.toString(),
         avatar: user.avatar,
         fullName: user.fullName,
-        phone: user.phone,
         email: user.email,
       }
     }

@@ -7,7 +7,6 @@ export interface AuthLoginSuccess extends SuccessResponse{
     id: string;
     avatar: string;
     fullName: string;
-    phone: string;
     email: string;
   };
 }
