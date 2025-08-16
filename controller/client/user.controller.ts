@@ -190,3 +190,18 @@ export const getUser = async (req: Request, res: Response): Promise<any> => {
   }
 }
 
+export const updateUser = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const user = res.locals.user;
+    const body = req.body;
+    const newUser = await User.findOneAndUpdate({_id: user.id}, body, {new: true}).select("-password -deleted -status -updatedAt");
+    const response: SuccessResponse = {
+      message: "User updated successfully",
+      user: newUser
+    }
+    return res.status(200).json(response);
+  } catch (error) {
+    return resError1(error, "Internal server error", res);
+  }
+}
+

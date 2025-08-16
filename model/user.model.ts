@@ -39,7 +39,7 @@ const userSchema = new mongoose.Schema({
   bio:{
     type: String,
     required: false,
-    default: ""
+    default: null
   },
   gender: {
     type: String,
@@ -47,7 +47,7 @@ const userSchema = new mongoose.Schema({
     default: "unknown"
   },
   dateOfBirth:{
-    type: Date,
+    type: String,
     required: false,
     default: null
   },
