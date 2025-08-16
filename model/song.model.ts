@@ -30,10 +30,7 @@ const songSchema = new mongoose.Schema({
   deleted: {
     type: Boolean,
     default: false
-  },
-  idAdmin: String,
-  idSinger: String,
-  idAlbum: String
+  }
 }, {timestamps: true});
 
 export default mongoose.model('song', songSchema, 'Song');
