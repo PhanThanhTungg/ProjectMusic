@@ -22,6 +22,12 @@ const playlistSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "user"
   },
+  listFollowers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user"
+    }
+  ],
   songs: [
     {
       type: mongoose.Schema.Types.ObjectId,

@@ -197,3 +197,64 @@ export const addSongToPlaylist = async (
     return resError1(error, "error", res);
   }
 };
+
+export const getListFollowPlaylist = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const playlists = await Playlist.aggregate([
+      { $match: { listFollowers: { $in: [new mongoose.Types.ObjectId(res.locals.user.id)] } } },
+      { $addFields: { songsCount: { $size: "$songs" } } },
+      { $project: { songs: 0, __v: 0 } }
+    ]);
+    const response: SuccessResponse = {
+      message: "Get list follow playlist successfully",
+      playlists
+    }
+    return res.status(200).json(response);
+  }catch(error){
+    return resError1(error, "error", res);
+  }
+}
+
+export const followPlaylist = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const { id } = req.params;
+
+    // check playlist is valid
+    const playlist = await Playlist.findById(id);
+    if (!playlist) {
+      return resError1(null, "Playlist not found", res, 404);
+    }
+
+    // check user is owner of playlist
+    if (playlist.idUser.toString() === res.locals.user.id) {
+      return resError1(null, "You are the owner of this playlist", res, 403);
+    }
+
+    // check user is already following this playlist
+    if (playlist.listFollowers.includes(new mongoose.Types.ObjectId(res.locals.user.id))) {
+      playlist.listFollowers = playlist.listFollowers.filter(
+        (follower) => follower.toString() !== res.locals.user.id
+      );
+      await playlist.save();
+      const response: SuccessResponse = {
+        message: "Unfollow playlist successfully",
+      };
+      return res.status(200).json(response);
+    }else{
+      playlist.listFollowers.push(new mongoose.Types.ObjectId(res.locals.user.id));
+      await playlist.save();
+      const response: SuccessResponse = {
+        message: "Follow playlist successfully",
+      };
+      return res.status(200).json(response);
+    }
+  }catch(error){
+    return resError1(error, "error", res);
+  }
+}
