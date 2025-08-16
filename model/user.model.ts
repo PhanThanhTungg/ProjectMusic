@@ -9,12 +9,18 @@ const userSchema = new mongoose.Schema({
     required: true
   }, 
   avatar: {
-    type: String
+    type: String,
+    default: null
   },
   email: {
     type: String,
     required: true,
     unique: true
+  },
+  phone: {
+    type: String,
+    required: false,
+    default: null
   },
   password: {
     type: String,
@@ -26,10 +32,34 @@ const userSchema = new mongoose.Schema({
       ref: "song"
     }
   ],
+  verifyArtist:{
+    type: Boolean,
+    default: false
+  },
+  bio:{
+    type: String,
+    required: false,
+    default: ""
+  },
+  gender: {
+    type: String,
+    enum: ["male", "female", "other", "unknown"],
+    default: "unknown"
+  },
+  dateOfBirth:{
+    type: Date,
+    required: false,
+    default: null
+  },
+  country: {
+    type: String,
+    required: false,
+    default: null
+  },
   status: {
     type: String,
-    default: "active",
-    enum: ["active", "inactive"]
+    enum: ["active", "inactive"],
+    default: "active"
   },
   deleted: {
     type: Boolean,

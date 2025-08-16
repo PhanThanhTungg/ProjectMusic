@@ -4,5 +4,5 @@ export interface ErrorResponse {
 }
 export interface SuccessResponse {
   message: string;
-  data?: any;
+  [key: string]: any;
 }

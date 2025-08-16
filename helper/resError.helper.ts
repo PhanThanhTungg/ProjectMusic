@@ -1,11 +1,10 @@
 import { ErrorResponse } from "../types/common/response.type";
 
-export const resError1 = (error:any,message: string,res:any)=>{
+export const resError1 = (error:any,message: string,res:any, statusCode: number = 500)=>{
   console.log("Have error: "+error);
-  console.log(error);
   const errorResponse:ErrorResponse = {
     message,
     error
   }
-  res.status(500).json(errorResponse);
+  res.status(statusCode).json(errorResponse);
 }

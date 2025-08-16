@@ -5,6 +5,7 @@ import { genAccessToken, genRefreshToken, verifyToken } from "../../helper/jwtTo
 import { saveCookie } from "../../helper/httpOnly.helper";
 import User from "../../model/user.model";
 import { AuthLoginSuccess, tokenDecoded } from "../../types/client/auth.type";
+import { resError1 } from "../../helper/resError.helper";
 
 export const register = async (req: Request, res: Response): Promise<any> => {
   try {
@@ -166,6 +167,26 @@ export const refreshToken = async (req: Request, res: Response): Promise<any> =>
       error: error
     };
     return res.status(500).json(response);
+  }
+}
+
+export const getUser = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const user = await User.findOne({ _id: id, deleted: false, status: "active" })
+    .select("-password -deleted -status -updatedAt");
+
+    if (!user) {
+      return resError1(new Error("User not found"), "User not found", res, 404);
+    }
+
+    const response: SuccessResponse = {
+      message: "User found",
+      user: user
+    };
+    return res.status(200).json(response);
+  } catch (error) {
+    return resError1(error, "Internal server error", res);
   }
 }
 
