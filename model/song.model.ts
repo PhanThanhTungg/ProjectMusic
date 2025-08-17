@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import slug from "mongoose-slug-generator";
+import slug from "mongoose-slug-updater";
 mongoose.plugin(slug);
 const songSchema = new mongoose.Schema({ 
   title: {
@@ -17,6 +17,20 @@ const songSchema = new mongoose.Schema({
   like: {
     type: Number,
     default: 0
+  },
+  albumId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "album",
+    required: false
+  },
+  genreId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "genre",
+    required: true
+  },
+  artistId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user"
   },
   slug:{
     type: String,

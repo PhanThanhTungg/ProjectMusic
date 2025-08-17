@@ -1,7 +1,5 @@
 import mongoose from "mongoose";
-import slug from "mongoose-slug-generator";
 import bcrypt from "bcrypt";
-mongoose.plugin(slug);
 
 const userSchema = new mongoose.Schema({
   fullName: {

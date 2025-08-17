@@ -2,23 +2,19 @@ import mongoose from "mongoose";
 import slug from "mongoose-slug-updater";
 mongoose.plugin(slug);
 
-const playlistSchema = new mongoose.Schema({
+const albumSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true
   },
   thumbnail: String,
   description: String,
-  status: {
-    type: String,
-    enum: ["public", "private"],
-    default: "private"
-  },
   slug: {
     type: String,
-    slug: "title"
+    slug: "title",
+    unique: true
   },
-  idUser: {
+  idArtist: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "user"
   },
@@ -28,12 +24,10 @@ const playlistSchema = new mongoose.Schema({
       ref: "user"
     }
   ],
-  songs: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "song"
-    }
-  ]
+  deleted: {
+    type: Boolean,
+    default: false
+  }
 },{timestamps: true});
 
-export default mongoose.model('playlist', playlistSchema, 'Playlist');
+export default mongoose.model('album', albumSchema, 'Album');
