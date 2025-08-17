@@ -3,6 +3,62 @@ import songModel from '../../model/song.model';
 import { resError1 } from '../../helper/resError.helper';
 import { ErrorResponse, SuccessResponse } from '../../types/common/response.type';
 import User from '../../model/user.model';
+import { createSongSchema } from '../../types/client/song.type';
+import genreModel from '../../model/genre.model';
+import mongoose from 'mongoose';
+import albumModel from '../../model/album.model';
+
+
+export const create = async (req: Request, res: Response): Promise<any> => {
+  try {
+    let createSongData = createSongSchema.safeParse(req.body);
+    if (!createSongData.success) {
+      return resError1(
+        createSongData.error,
+        JSON.parse(createSongData.error.message)[0].message,
+        res,
+        400
+      );
+    }
+
+    const currentUser = res.locals.user;
+    if(currentUser.verifyArtist  === false) return resError1(null, "You are not an artist", res, 400);
+
+    // Check genre
+    const checkGenre = await genreModel.findOne({
+      _id: new mongoose.Types.ObjectId(createSongData.data.genreId),
+      deleted: false
+    });
+    if(!checkGenre) return resError1(null, "Genre not found", res, 404);
+    if(checkGenre.status === "inactive") return resError1(null, "Genre is inactive", res, 400);
+
+    // Check album
+    if(createSongData.data.albumId){
+      const checkAlbum = await albumModel.findOne({
+        _id: new mongoose.Types.ObjectId(createSongData.data.albumId),
+        deleted: false
+      });
+      if(!checkAlbum) return resError1(null, "Album not found", res, 404);
+      if(checkAlbum.idArtist.toString() !== currentUser._id.toString()) return resError1(null, "You are not the artist of this album", res, 400);
+    }
+
+    const song = await songModel.create({
+      ...createSongData.data,
+      genreId: new mongoose.Types.ObjectId(createSongData.data.genreId),
+      artistId: currentUser._id,
+      ...(createSongData.data.albumId && { albumId: new mongoose.Types.ObjectId(createSongData.data.albumId) })
+    });
+
+    const response: SuccessResponse = {
+      message: "Song created successfully",
+      data: song
+    }
+    return res.status(200).json(response);
+  } catch (error) {
+    resError1(error, "error", res);
+  }
+}
+
 
 export const getAll = async (req: Request, res:Response):Promise<any>=>{
   try {
