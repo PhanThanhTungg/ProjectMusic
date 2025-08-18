@@ -42,13 +42,12 @@ export const register = async (req: Request, res: Response): Promise<any> => {
   }
 }
 
-
 export const login = async (req: Request, res: Response): Promise<any> => {
   try {
     const { email, password } = req.body;
 
     // check email, password in database
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).lean();
     if (!user) {
       const response: ErrorResponse = {
         message: "Email not found"
@@ -67,17 +66,13 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     const refreshToken: string = genRefreshToken(user._id.toString(), "user");
     saveCookie(res, "userRefreshToken", refreshToken);
 
+    delete user.password;
+
     // response
     const response: AuthLoginSuccess = {
       message: "Login successful",
       accessToken,
-      user: {
-        type: "user",
-        id: user._id.toString(),
-        avatar: user.avatar,
-        fullName: user.fullName,
-        email: user.email,
-      }
+      user
     }
     return res.status(200).json(response);
 

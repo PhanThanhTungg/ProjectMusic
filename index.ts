@@ -1,6 +1,9 @@
 import express,{ Express } from "express";
 const app:Express = express();
 
+import dotenv from "dotenv";
+dotenv.config();
+
 import cors from "cors";
 const corsOrigin:string | boolean = process.env.CORS_ORIGIN == "true" ? true : process.env.CORS_ORIGIN;
 app.use(cors(
@@ -9,9 +12,6 @@ app.use(cors(
     credentials: true,
   }
 ));
-
-import dotenv from "dotenv";
-dotenv.config();
 
 import bodyParser from 'body-parser'; 
 app.use(bodyParser.json());

@@ -11,3 +11,7 @@ export const createSongSchema = z.object({
   albumId: z.string().optional(),
   status: z.enum(["active", "inactive"]).optional(),
 });
+
+export type CreateSongSchema = z.infer<typeof createSongSchema>;
+
+export const updateSongSchema = createSongSchema.partial();

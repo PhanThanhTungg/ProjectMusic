@@ -2,13 +2,7 @@ import { SuccessResponse } from "../common/response.type";
 
 export interface AuthLoginSuccess extends SuccessResponse{
   accessToken: string;
-  user: {
-    type: "admin"| "user";
-    id: string;
-    avatar: string;
-    fullName: string;
-    email: string;
-  };
+  user: any;
 }
 
 export interface tokenDecoded {
