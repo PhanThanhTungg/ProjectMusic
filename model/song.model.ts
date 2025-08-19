@@ -32,6 +32,11 @@ const songSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "user"
   },
+  collaborationArtistIds: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: "user",
+    required: false
+  },
   slug:{
     type: String,
     slug: "title"

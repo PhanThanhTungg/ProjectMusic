@@ -8,6 +8,7 @@ import {
 import User from "../../model/user.model";
 import {
   createSongSchema,
+  updateSongSchema,
 } from "../../schema/client/song.schema";
 import genreModel from "../../model/genre.model";
 import mongoose from "mongoose";
@@ -44,13 +45,21 @@ const checkGenreAndAlbum = async (
 export const create = async (req: Request, res: Response): Promise<any> => {
   try {
     let createSongData = createSongSchema.safeParse(req.body);
-    if (!createSongData.success) {
-      return resError1(
-        createSongData.error,
-        JSON.parse(createSongData.error.message)[0].message,
-        res,
-        400
-      );
+    if (!createSongData.success) 
+      return resError1(createSongData.error,JSON.parse(createSongData.error.message)[0].message,res,400);
+
+    // check collaboration artist
+    if (createSongData.data.collaborationArtistIds) {
+      const collaborationArtistIds = createSongData.data.collaborationArtistIds.map((id: string) => new mongoose.Types.ObjectId(id));
+      const collaborationArtists = await User.find({
+        _id: { $in: collaborationArtistIds },
+      });
+      if (collaborationArtists.length !== collaborationArtistIds.length) {
+        return resError1(null, "Some collaboration artists not found", res, 404);
+      }
+      if (collaborationArtists.some((artist) => artist.verifyArtist === false)) {
+        return resError1(null, "Some collaboration artists are not verified", res, 400);
+      }
     }
 
     const currentUser = res.locals.user;
@@ -215,3 +224,35 @@ export const like = async (req: Request, res: Response): Promise<any> => {
     resError1(error, "error", res);
   }
 };
+
+export const update = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const currentUser = res.locals.user;
+    if (currentUser.verifyArtist === false)
+      return resError1(null, "You are not an artist", res, 400);
+
+    const song = await songModel.findOne({
+      _id: req.params.id,
+      artistId: currentUser._id,
+      deleted: false,
+    });
+    if (!song) {
+      return resError1(null, "Song not found", res, 404);
+    }
+
+    const updateSongData = updateSongSchema.safeParse(req.body);
+    if (!updateSongData.success) 
+      return resError1(updateSongData.error,JSON.parse(updateSongData.error.message)[0].message,res,400);
+
+    const updatedSong = await songModel.findByIdAndUpdate(req.params.id, updateSongData.data, { new: true });
+
+    const response: SuccessResponse = {
+      message: "Song updated successfully",
+      updatedSong
+    };
+    return res.status(200).json(response);
+  }
+  catch (error) {
+    resError1(error, "error", res);
+  }
+}

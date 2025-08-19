@@ -8,6 +8,7 @@ export const createSongSchema = z.object({
   lyrics: z.string().url("Lyrics must be a valid URL").optional(),
   audio: z.string("Audio is required").url("Audio must be a valid URL"),
   genreId: z.string("Genre is required"),
+  collaborationArtistIds: z.array(z.string()).optional(),
   albumId: z.string().optional(),
   status: z.enum(["active", "inactive"]).optional()
 });
