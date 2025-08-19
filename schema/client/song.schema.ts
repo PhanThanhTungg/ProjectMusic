@@ -9,9 +9,7 @@ export const createSongSchema = z.object({
   audio: z.string("Audio is required").url("Audio must be a valid URL"),
   genreId: z.string("Genre is required"),
   albumId: z.string().optional(),
-  status: z.enum(["active", "inactive"]).optional(),
+  status: z.enum(["active", "inactive"]).optional()
 });
-
-export type CreateSongSchema = z.infer<typeof createSongSchema>;
 
 export const updateSongSchema = createSongSchema.partial();

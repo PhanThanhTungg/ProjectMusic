@@ -8,7 +8,7 @@ import { authAccessToken } from "../../middleware/client/auth.middleware";
 
 route.post("/auth/register",auth.register ,controller.register);
 
-route.post("/auth/login",auth.login ,controller.login);
+route.post("/auth/login",controller.login);
 
 route.post("/auth/refreshToken",controller.refreshToken);
 

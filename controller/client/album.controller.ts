@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import {
   createAlbumSchema,
   updateAlbumSchema,
-} from "../../types/client/album.type";
+} from "../../schema/client/album.schema";
 import { resError1 } from "../../helper/resError.helper";
 import albumModel from "../../model/album.model";
 import mongoose from "mongoose";

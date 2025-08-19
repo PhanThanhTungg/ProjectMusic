@@ -18,7 +18,7 @@ route.patch("/:id", authAccessToken, controller.updatePlaylist);
 
 route.delete("/:id", authAccessToken, controller.deletePlaylist);
 
-route.post("/:playlistId/add-remove-song/:idSong", authAccessToken, controller.addSongToPlaylist);
+route.post("/:playlistId/:typeAction/:idSong", authAccessToken, controller.addRemoveSongToPlaylist);
 
 
 

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import Playlist from "../../model/playlist.model";
-import { createPlayListSchema, updatePlayListSchema } from "../../types/client/playlist.type";
+import { createPlayListSchema, updatePlayListSchema } from "../../schema/client/playlist.schema";
 import mongoose from "mongoose";
 import { resError1 } from "../../helper/resError.helper";
 import songModel from "../../model/song.model";
@@ -147,7 +147,7 @@ export const deletePlaylist = async (
   }
 }
 
-export const addSongToPlaylist = async (
+export const addRemoveSongToPlaylist = async (
   req: Request,
   res: Response
 ): Promise<any> => {
@@ -175,21 +175,32 @@ export const addSongToPlaylist = async (
       return resError1(null, "Song not found", res, 404);
     }
 
-    // check song is already in playlist
-    if (playlist.songs.includes(new mongoose.Types.ObjectId(idSong))) {
+    // check typeAction is valid
+    const typeAction = req.params.typeAction;
+    if (typeAction !== "add" && typeAction !== "remove") return resError1(null, "Invalid action type", res, 400);
+
+    // implement add or remove song to playlist
+    if( typeAction === "add" ) {
+      if( playlist.songs.includes(new mongoose.Types.ObjectId(idSong))) {
+        return resError1(null, "Song is already in playlist", res, 400);
+      }
+      playlist.songs.push(new mongoose.Types.ObjectId(idSong));
+      await playlist.save();
+      const response: SuccessResponse = {
+        message: "Song added to playlist",
+      };
+      return res.status(200).json(response);
+    }
+    else if( typeAction === "remove" ) {
+      if( !playlist.songs.includes(new mongoose.Types.ObjectId(idSong))) {
+        return resError1(null, "Song is not in playlist", res, 400);
+      }
       playlist.songs = playlist.songs.filter(
         (song) => song.toString() !== idSong
       );
       await playlist.save();
       const response: SuccessResponse = {
         message: "Song removed from playlist",
-      };
-      return res.status(200).json(response);
-    } else {
-      playlist.songs.push(new mongoose.Types.ObjectId(idSong));
-      await playlist.save();
-      const response: SuccessResponse = {
-        message: "Song added to playlist",
       };
       return res.status(200).json(response);
     }

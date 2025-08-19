@@ -8,8 +8,7 @@ import {
 import User from "../../model/user.model";
 import {
   createSongSchema,
-  CreateSongSchema,
-} from "../../types/client/song.type";
+} from "../../schema/client/song.schema";
 import genreModel from "../../model/genre.model";
 import mongoose from "mongoose";
 import albumModel from "../../model/album.model";
