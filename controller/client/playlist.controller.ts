@@ -35,14 +35,16 @@ export const getDetailPlaylist = async (
     const { slug } = req.params;
     const playlist = await Playlist.findOne({
       slug: slug
-    }).populate("songs");
+    }).populate("songs").populate("idUser").lean();
 
-    // check playlist is valid
+    playlist["user"] = playlist.idUser;
+    delete playlist.idUser;
+    delete playlist["user"].password;
+
     if(!playlist){
       return resError1(null, "Playlist not found", res, 404);
     }
 
-    // check permission
     if(playlist.status === "private" && playlist.idUser.toString() !== res.locals.user.id){
       return resError1(null, "You don't have permission to access this playlist", res, 403);
     }

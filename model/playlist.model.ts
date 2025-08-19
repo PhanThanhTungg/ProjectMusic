@@ -12,7 +12,7 @@ const playlistSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ["public", "private"],
-    default: "private"
+    default: "public"
   },
   slug: {
     type: String,

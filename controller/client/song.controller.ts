@@ -93,6 +93,7 @@ export const getAll = async (req: Request, res: Response): Promise<any> => {
       status: "active",
       deleted: false
     });
+    
     const response: SuccessResponse = {
       message: "Songs found",
       data: songs,
