@@ -4,54 +4,41 @@ import bcrypt from "bcrypt";
 import { ErrorResponse, SuccessResponse } from "../../types/common/response.type";
 import { genAccessToken, genRefreshToken, verifyToken } from "../../helper/jwtToken.helper";
 import { saveCookie } from "../../helper/httpOnly.helper";
-import { AuthLoginSuccess, tokenDecoded } from "../../types/admin/auth.type";
+import { tokenDecoded } from "../../types/admin/auth.type";
+import { loginInputSchema } from "../../schema/admin/auth.schema";
+import { resError1 } from "../../helper/resError.helper";
 
 
 export const login = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { email, password } = req.body;
+    const loginData = loginInputSchema.safeParse(req.body);
+    if (!loginData.success) {
+      return resError1(loginData.error, JSON.parse(loginData.error.message)[0].message, res, 400);
+    }
+    
+    const { email, password } = loginData.data;
 
-    // check email, password in database
     const admin = await Admin.findOne({ email });
     if (!admin) {
-      const response: ErrorResponse = {
-        message: "Email not found"
-      };
-      return res.status(404).json(response);
+      return resError1(null, "Email not found", res, 404);
     }
     if (!bcrypt.compareSync(password, admin.password)) {
-      const response: ErrorResponse = {
-        message: "Incorrect password"
-      };
-      return res.status(401).json(response);
+      return resError1(null, "Incorrect password", res, 401);
     }
 
-    // gen access token and refresh token
     const accessToken: string = genAccessToken(admin._id.toString(), "admin");
     const refreshToken: string = genRefreshToken(admin._id.toString(), "admin");
     saveCookie(res, "adminRefreshToken", refreshToken);
 
-    // response
-    const response: AuthLoginSuccess = {
+    const response: SuccessResponse = {
       message: "Login successful",
       accessToken,
-      user: {
-        type: "admin",
-        id: admin._id.toString(),
-        avatar: admin.avatar,
-        name: admin.name,
-        phone: admin.phone,
-        email: admin.email,
-      }
+      user: admin
     }
     return res.status(200).json(response);
 
   } catch (error) {
-    const response: ErrorResponse = {
-      message: "Internal server error",
-      error: error
-    };
-    return res.status(500).json(response);
+    resError1(error, "Internal server error", res, 500);
   }
 }
 
@@ -59,67 +46,37 @@ export const refreshToken = async (req: Request, res: Response): Promise<any> =>
   try {
     const refreshToken: string = req.cookies["adminRefreshToken"];
 
-    // check refresh token
     if (!refreshToken) {
-      const response: ErrorResponse = {
-        message: "No refresh token provided",
-        error: "Unauthorized"
-      };
-      return res.status(401).json(response);
+      return resError1(null, "No refresh token provided", res, 401);
     }
 
-    // verify refresh token
     const refreshTokenDecoded: tokenDecoded | null = verifyToken(refreshToken, "refresh");
     if (!refreshTokenDecoded) {
-      const response: ErrorResponse = {
-        message: "Invalid refresh token",
-        error: "Forbidden"
-      };
-      return res.status(403).json(response);
+      return resError1(null, "Invalid refresh token", res, 403);
     }
     if (refreshTokenDecoded.expired == true) {
-      const response: ErrorResponse = {
-        message: "Refresh token expired",
-        error: "Forbidden"
-      };
-      return res.status(403).json(response);
+      return resError1(null, "Refresh token expired", res, 403);
     }
     const adminId: string = refreshTokenDecoded["id"];
     const type: string = refreshTokenDecoded["type"];
 
-    // check adminId
     if (!adminId) {
-      const response: ErrorResponse = {
-        message: "Invalid refresh token",
-        error: "Forbidden"
-      };
-      return res.status(403).json(response);
+      return resError1(null, "Invalid refresh token", res, 403);
     }
     if (type !== "admin") {
-      const response: ErrorResponse = {
-        message: "Invalid token type",
-        error: "Forbidden"
-      };
-      return res.status(403).json(response);
+      return resError1(null, "Invalid token type", res, 403);
     }
 
-    // find admin in database
     const admin = await Admin.findOne({ _id: adminId });
     if (!admin) {
-      const response: ErrorResponse = {
-        message: "Admin not found",
-        error: "Not Found"
-      };
-      return res.status(404).json(response);
+      return resError1(null, "Admin not found", res, 404);
     }
 
-    // create new tokens
     const newAccessToken: string = genAccessToken(admin._id.toString(), "admin");
     const newRefreshToken: string = genRefreshToken(admin._id.toString(), "admin");
     saveCookie(res, "adminRefreshToken", newRefreshToken);
 
-    // respond
-    const response: Omit<AuthLoginSuccess, "user"> = {
+    const response: SuccessResponse = {
       message: "Access token refreshed successfully",
       accessToken: newAccessToken
     };
@@ -127,11 +84,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<any> =>
 
   } catch (error) {
     console.log(error);
-    const response: ErrorResponse = {
-      message: "Internal server error",
-      error: error
-    };
-    return res.status(500).json(response);
+    resError1(error, "Internal server error", res, 500);
   }
 }
 

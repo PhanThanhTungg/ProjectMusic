@@ -1,30 +1,30 @@
 import { Request, Response } from "express";
 import genreModel from "../../model/genre.model";
 import paginationHelper from "../../helper/pagination.helper";
-import { GenreDataCreate } from "../../types/admin/genre.type";
+import { createGenreSchema } from "../../schema/admin/genre.schema";
+import { resError1 } from "../../helper/resError.helper";
+import { SuccessResponse } from "../../types/common/response.type";
 
-export const createPOST = async (req:Request,res:Response):Promise<void>=>{
+export const createPOST = async (req:Request,res:Response):Promise<any>=>{
   try {
-    const genreData:GenreDataCreate = {
-      title: req.body.title,
-      ...(req.body?.thumbnail && { thumbnail: req.body.thumbnail }),
-      ...(req.body?.description && { description: req.body.description })
+    const genreData = createGenreSchema.safeParse(req.body);
+    if (!genreData.success) {
+      return resError1(genreData.error, JSON.parse(genreData.error.message)[0].message, res, 400);
     }
-    const genre = new genreModel(genreData);
+
+    const genre = new genreModel(genreData.data);
     await genre.save();
-    res.json({
-      code: 200,
-      message: "create genre successfully",
+
+    const response: SuccessResponse = {
+      message: "Genre created successfully",
       data: genre
-    })
+    }
+    return res.status(200).json(response);
   } catch (error) {
-    res.json({
-      code: 400,
-      message: error,
-    })
+    resError1(error, "Internal server error", res, 500);
   }
 }
-export const indexGET = async (req:Request,res:Response):Promise<void>=>{
+export const indexGET = async (req:Request,res:Response):Promise<any>=>{
   try {
     const find = {
       deleted: false
@@ -43,16 +43,15 @@ export const indexGET = async (req:Request,res:Response):Promise<void>=>{
     
     const genres = await genreModel.find(find).sort(sort)
     .skip(objectPagination["skip"]).limit(objectPagination["limit"]);
-    res.json({
-      code: 200,
+
+    const response: SuccessResponse = {
+      message: "Genres fetched successfully",
       data: genres,
       objectPagination: objectPagination
-    })
+    }
+    return res.status(200).json(response);
   } catch (error) {
-    res.json({
-      code: 400,
-      message: error,
-    })
+    resError1(error, "Internal server error", res, 500);
   }
 
 }
