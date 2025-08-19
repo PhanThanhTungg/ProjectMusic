@@ -49,7 +49,12 @@ export const getDetailAlbum = async (
     if (!album) {
       return resError1(null, "Album not found", res, 404);
     }
-    return res.status(200).json(album);
+    
+    const response: SuccessResponse = {
+      message: "Get detail album success",
+      album
+    }
+    return res.status(200).json(response);
   } catch (error) {
     return resError1(error, "Have error when get detail album", res, 500);
   }

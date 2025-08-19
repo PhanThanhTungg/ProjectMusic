@@ -6,23 +6,19 @@ import { saveCookie } from "../../helper/httpOnly.helper";
 import User from "../../model/user.model";
 import { AuthLoginSuccess, tokenDecoded } from "../../types/client/auth.type";
 import { resError1 } from "../../helper/resError.helper";
-import { loginInputSchema } from "../../schema/client/user.schema";
+import { loginInputSchema, registerInputSchema } from "../../schema/client/user.schema";
 
 export const register = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { email, fullName, password } = req.body;
+    const registerData = registerInputSchema.safeParse(req.body);
+    if (!registerData.success)
+      return resError1(registerData.error, JSON.parse(registerData.error.message)[0].message, res, 400);
 
-    // check email, name, password in database
+    const { email, fullName, password } = registerData.data;
+
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      const response: ErrorResponse = {
-        message: "Email already exists",
-        error: "Conflict"
-      };
-      return res.status(409).json(response);
-    }
+    if (existingUser) return resError1(new Error("Email already exists"), "Email already exists", res, 400);
 
-    // create new user
     const newUser = new User({
       email,
       fullName,
@@ -45,26 +41,22 @@ export const register = async (req: Request, res: Response): Promise<any> => {
 
 export const login = async (req: Request, res: Response): Promise<any> => {
   try {
-    // validate input
     const loginData = loginInputSchema.safeParse(req.body);
     if (!loginData.success)
       return resError1(loginData.error, JSON.parse(loginData.error.message)[0].message, res, 400);
     const { email, password } = loginData.data;
 
-    // check email, password in database
     const user = await User.findOne({ email }).lean();
     if (!user) return resError1(new Error("User not found"), "User not found", res, 404);
     if (!bcrypt.compareSync(password, user.password))
       return resError1(new Error("Invalid password"), "Invalid password", res, 401);
 
-    // gen access token and refresh token
     const accessToken: string = genAccessToken(user._id.toString(), "user");
     const refreshToken: string = genRefreshToken(user._id.toString(), "user");
     saveCookie(res, "userRefreshToken", refreshToken);
 
     delete user.password;
 
-    // response
     const response: AuthLoginSuccess = {
       message: "Login successful",
       accessToken,
@@ -82,7 +74,6 @@ export const refreshToken = async (req: Request, res: Response): Promise<any> =>
   try {
     const refreshToken: string = req.cookies["userRefreshToken"];
 
-    // check refresh token
     if (!refreshToken) {
       const response: ErrorResponse = {
         message: "No refresh token provided",
@@ -91,18 +82,15 @@ export const refreshToken = async (req: Request, res: Response): Promise<any> =>
       return res.status(401).json(response);
     }
 
-    // verify refresh token
     const refreshTokenDecoded: tokenDecoded | null = verifyToken(refreshToken, "refresh");
     if (!refreshTokenDecoded) return resError1(new Error("Invalid refresh token"), "Invalid refresh token", res, 403);
     if (refreshTokenDecoded.expired == true) return resError1(new Error("Refresh token expired"), "Refresh token expired", res, 403);
+    
     const userId: string = refreshTokenDecoded["id"];
     const type: string = refreshTokenDecoded["type"];
-
-    // check userId
     if (!userId) return resError1(new Error("User ID not found in token"), "User ID not found in token", res, 403);
     if (type !== "user") return resError1(new Error("Invalid token type"), "Invalid token type", res, 403);
     
-    // find user in database
     const user = await User.findOne({ _id: userId });
     if (!user) {
       const response: ErrorResponse = {
@@ -112,12 +100,10 @@ export const refreshToken = async (req: Request, res: Response): Promise<any> =>
       return res.status(404).json(response);
     }
 
-    // create new tokens
     const newAccessToken: string = genAccessToken(user._id.toString(), "user");
     const newRefreshToken: string = genRefreshToken(user._id.toString(), "user");
     saveCookie(res, "userRefreshToken", newRefreshToken);
 
-    // respond
     const response: Omit<AuthLoginSuccess, "user"> = {
       message: "Access token refreshed successfully",
       accessToken: newAccessToken

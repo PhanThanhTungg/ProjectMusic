@@ -1,25 +1,21 @@
 import {Router} from 'express';
 const route: Router = Router();
 import * as controller from "../../controller/client/playlist.controller";
-import {authAccessToken} from "../../middleware/client/auth.middleware";
 
+route.get("/follow",controller.getListFollowPlaylist);
 
-route.get("/follow", authAccessToken, controller.getListFollowPlaylist);
+route.post("/follow/:id", controller.followPlaylist);
 
-route.post("/follow/:id", authAccessToken, controller.followPlaylist);
+route.get("/", controller.getAllPlaylistOfUser);
 
-route.get("/", authAccessToken, controller.getAllPlaylistOfUser);
+route.post("/", controller.createPlaylist);
 
-route.post("/", authAccessToken, controller.createPlaylist);
+route.get("/:slug", controller.getDetailPlaylist);
 
-route.get("/:slug", authAccessToken, controller.getDetailPlaylist);
+route.patch("/:id", controller.updatePlaylist);
 
-route.patch("/:id", authAccessToken, controller.updatePlaylist);
+route.delete("/:id", controller.deletePlaylist);
 
-route.delete("/:id", authAccessToken, controller.deletePlaylist);
-
-route.post("/:playlistId/:typeAction/:idSong", authAccessToken, controller.addRemoveSongToPlaylist);
-
-
+route.post("/:playlistId/:typeAction/:idSong", controller.addRemoveSongToPlaylist);
 
 export default route;

@@ -77,7 +77,11 @@ export const createPlaylist = async (
       ...createPlayListData.data,
       idUser: new mongoose.Types.ObjectId(id),
     });
-    return res.status(201).json(playlist);
+    const response: SuccessResponse = {
+      message: "Create playlist successfully",
+      playlist
+    }
+    return res.status(201).json(response);
   } catch (error) {
     return resError1(error, "error", res);
   }
@@ -152,14 +156,12 @@ export const addRemoveSongToPlaylist = async (
   res: Response
 ): Promise<any> => {
   try {
-    // check playlistId is valid
     const { playlistId, idSong } = req.params;
     const playlist = await Playlist.findById(playlistId);
     if (!playlist) {
       return resError1(null, "Playlist not found", res, 404);
     }
 
-    // check user is owner of playlist
     if (playlist.idUser.toString() !== res.locals.user.id) {
       return resError1(
         null,
@@ -169,17 +171,14 @@ export const addRemoveSongToPlaylist = async (
       );
     }
 
-    // check song is valid
     const song = await songModel.findById(idSong);
     if (!song) {
       return resError1(null, "Song not found", res, 404);
     }
 
-    // check typeAction is valid
     const typeAction = req.params.typeAction;
     if (typeAction !== "add" && typeAction !== "remove") return resError1(null, "Invalid action type", res, 400);
 
-    // implement add or remove song to playlist
     if( typeAction === "add" ) {
       if( playlist.songs.includes(new mongoose.Types.ObjectId(idSong))) {
         return resError1(null, "Song is already in playlist", res, 400);
@@ -236,18 +235,15 @@ export const followPlaylist = async (
   try {
     const { id } = req.params;
 
-    // check playlist is valid
     const playlist = await Playlist.findById(id);
     if (!playlist) {
       return resError1(null, "Playlist not found", res, 404);
     }
 
-    // check user is owner of playlist
     if (playlist.idUser.toString() === res.locals.user.id) {
       return resError1(null, "You are the owner of this playlist", res, 403);
     }
 
-    // check user is already following this playlist
     if (playlist.listFollowers.includes(new mongoose.Types.ObjectId(res.locals.user.id))) {
       playlist.listFollowers = playlist.listFollowers.filter(
         (follower) => follower.toString() !== res.locals.user.id

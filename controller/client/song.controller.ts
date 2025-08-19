@@ -82,12 +82,13 @@ export const getAll = async (req: Request, res: Response): Promise<any> => {
   try {
     const songs = await songModel.find({
       status: "active",
-      deleted: false,
+      deleted: false
     });
-    res.json({
-      code: 200,
+    const response: SuccessResponse = {
+      message: "Songs found",
       data: songs,
-    });
+    };
+    return res.status(200).json(response);
   } catch (error) {
     resError1(error, "error", res);
   }
@@ -116,6 +117,54 @@ export const getDetail = async (req: Request, res: Response): Promise<any> => {
     resError1(error, "error", res);
   }
 };
+
+export const getSongOfArtist = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const artist = await User.findOne({
+      _id: req.params.artistId,
+    });
+    if (!artist) {
+      return resError1(null, "Artist not found", res, 404);
+    }
+
+    const songs = await songModel.find({
+      artistId: artist._id,
+      status: "active",
+      deleted: false,
+    });
+
+    const response: SuccessResponse = {
+      message: "Songs found",
+      data: songs,
+    };
+    return res.status(200).json(response);
+  }
+  catch (error) {
+    resError1(error, "error", res);
+  }
+};
+
+export const getMySong = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const currentUser = res.locals.user;
+    if (currentUser.verifyArtist === false)
+      return resError1(null, "You are not an artist", res, 400);
+
+    const songs = await songModel.find({
+      artistId: currentUser._id,
+      deleted: false,
+    });
+    
+    const response: SuccessResponse = {
+      message: "Songs found",
+      data: songs,
+    };
+    return res.status(200).json(response);
+  }
+  catch (error) {
+    resError1(error, "error", res);
+  }
+}
 
 export const like = async (req: Request, res: Response): Promise<any> => {
   try {
