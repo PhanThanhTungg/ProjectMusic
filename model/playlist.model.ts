@@ -16,7 +16,8 @@ const playlistSchema = new mongoose.Schema({
   },
   slug: {
     type: String,
-    slug: "title"
+    slug: "title",
+    unique: true
   },
   idUser: {
     type: mongoose.Schema.Types.ObjectId,

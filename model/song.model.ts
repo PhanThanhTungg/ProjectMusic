@@ -39,7 +39,8 @@ const songSchema = new mongoose.Schema({
   },
   slug:{
     type: String,
-    slug: "title"
+    slug: "title",
+    unique: true
   },
   status:{
     type: String,
