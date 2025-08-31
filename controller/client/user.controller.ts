@@ -11,6 +11,7 @@ import { GetUserInterface } from "../../interfaces/client/user.interface";
 import songModel from "../../model/song.model";
 import albumModel from "../../model/album.model";
 import playlistModel from "../../model/playlist.model";
+import mongoose from "mongoose";
 
 export const register = async (req: Request, res: Response): Promise<any> => {
   try {
@@ -140,10 +141,10 @@ export const getUser = async (req: Request, res: Response): Promise<any> => {
     if(user.verifyArtist === true) {
       top5NewestSongs = await songModel.find({ artistId: user._id, deleted: false})
       .sort({ createdAt: -1 }).limit(5);
-      albums = await albumModel.find({ artistId: user._id, deleted: false});
+      albums = await albumModel.find({ idArtist: user._id, deleted: false});
     }
 
-    const playlists = await playlistModel.find({ idUser: user._id, deleted: false});
+    const playlists = await playlistModel.find({ idUser: user._id, status: "public"});
 
     const response: GetUserInterface = {
       message: "User found",
@@ -166,6 +167,19 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
     const response: SuccessResponse = {
       message: "User updated successfully",
       user: newUser
+    }
+    return res.status(200).json(response);
+  } catch (error) {
+    return resError1(error, "Internal server error", res);
+  }
+}
+
+export const getAllArtists = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const artists = await User.find({ verifyArtist: true, deleted: false, status: "active" });
+    const response: SuccessResponse = {
+      message: "Artists found",
+      artists
     }
     return res.status(200).json(response);
   } catch (error) {
