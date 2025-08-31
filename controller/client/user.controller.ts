@@ -11,7 +11,6 @@ import { GetUserInterface } from "../../interfaces/client/user.interface";
 import songModel from "../../model/song.model";
 import albumModel from "../../model/album.model";
 import playlistModel from "../../model/playlist.model";
-import mongoose from "mongoose";
 
 export const register = async (req: Request, res: Response): Promise<any> => {
   try {
