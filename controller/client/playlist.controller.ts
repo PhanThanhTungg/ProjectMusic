@@ -4,7 +4,7 @@ import { createPlayListSchema, updatePlayListSchema } from "../../schema/client/
 import mongoose from "mongoose";
 import { resError1 } from "../../helper/resError.helper";
 import songModel from "../../model/song.model";
-import { SuccessResponse } from "../../types/common/response.type";
+import { SuccessResponse } from "../../interfaces/common/response.type";
 
 export const getAllPlaylistOfUser = async (
   req: Request,

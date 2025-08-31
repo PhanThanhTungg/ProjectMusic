@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { ObjectId } from "mongoose";
-import { tokenDecoded } from "../types/admin/auth.type";
+import { tokenDecoded } from "../interfaces/admin/auth.interface";
 
 export const genAccessToken = (id:string, type: "admin"|"user"):string =>{
   const accessToken:string = jwt.sign({id, type}, process.env.ACCESS_TOKEN_SECRET,{expiresIn: process.env.ACCESS_TOKEN_SECRET_EXPIRE})

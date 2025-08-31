@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { tokenDecoded } from "../../types/admin/auth.type";
+import { tokenDecoded } from "../../interfaces/admin/auth.interface";
 import { verifyToken } from "../../helper/jwtToken.helper";
 import User from "../../model/user.model";
 

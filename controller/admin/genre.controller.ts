@@ -3,7 +3,7 @@ import genreModel from "../../model/genre.model";
 import paginationHelper from "../../helper/pagination.helper";
 import { createGenreSchema } from "../../schema/admin/genre.schema";
 import { resError1 } from "../../helper/resError.helper";
-import { SuccessResponse } from "../../types/common/response.type";
+import { SuccessResponse } from "../../interfaces/common/response.type";
 
 export const createPOST = async (req:Request,res:Response):Promise<any>=>{
   try {

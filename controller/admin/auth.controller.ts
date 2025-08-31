@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import Admin from "../../model/admin.model";
 import bcrypt from "bcrypt";
-import { ErrorResponse, SuccessResponse } from "../../types/common/response.type";
+import { ErrorResponse, SuccessResponse } from "../../interfaces/common/response.type";
 import { genAccessToken, genRefreshToken, verifyToken } from "../../helper/jwtToken.helper";
 import { saveCookie } from "../../helper/httpOnly.helper";
-import { tokenDecoded } from "../../types/admin/auth.type";
+import { tokenDecoded } from "../../interfaces/admin/auth.interface";
 import { loginInputSchema } from "../../schema/admin/auth.schema";
 import { resError1 } from "../../helper/resError.helper";
 

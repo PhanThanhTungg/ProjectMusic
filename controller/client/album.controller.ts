@@ -6,15 +6,38 @@ import {
 import { resError1 } from "../../helper/resError.helper";
 import albumModel from "../../model/album.model";
 import mongoose from "mongoose";
-import { SuccessResponse } from "../../types/common/response.type";
+import { SuccessResponse } from "../../interfaces/common/response.type";
 import songModel from "../../model/song.model";
 
 export const getAlbum = async (req: Request, res: Response): Promise<any> => {
   try {
-    const albums = await albumModel.find({
-      idArtist: new mongoose.Types.ObjectId(res.locals.user.id),
-      deleted: false,
-    });
+    const albums = await albumModel.aggregate([
+      {
+        $match: {
+          idArtist: new mongoose.Types.ObjectId(res.locals.user.id),
+          deleted: false,
+        }
+      },
+      {
+        $lookup: {
+          from: "Song",
+          localField: "_id",
+          foreignField: "albumId",
+          as: "songs"
+        }
+      },
+      {
+        $addFields: {
+          songCount: { $size: "$songs" }
+        }
+      },
+      {
+        $project: {
+          songs: 0,
+          __v: 0
+        }
+      }
+    ]);
 
     const response: SuccessResponse = {
       message: "Get album success",

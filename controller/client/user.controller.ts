@@ -1,12 +1,16 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import { ErrorResponse, SuccessResponse } from "../../types/common/response.type";
+import { ErrorResponse, SuccessResponse } from "../../interfaces/common/response.type";
 import { genAccessToken, genRefreshToken, verifyToken } from "../../helper/jwtToken.helper";
 import { saveCookie } from "../../helper/httpOnly.helper";
 import User from "../../model/user.model";
-import { AuthLoginSuccess, tokenDecoded } from "../../types/client/auth.type";
+import { AuthLoginSuccess, tokenDecoded } from "../../interfaces/client/auth.interface";
 import { resError1 } from "../../helper/resError.helper";
 import { loginInputSchema, registerInputSchema } from "../../schema/client/user.schema";
+import { GetUserInterface } from "../../interfaces/client/user.interface";
+import songModel from "../../model/song.model";
+import albumModel from "../../model/album.model";
+import playlistModel from "../../model/playlist.model";
 
 export const register = async (req: Request, res: Response): Promise<any> => {
   try {
@@ -130,9 +134,23 @@ export const getUser = async (req: Request, res: Response): Promise<any> => {
       return resError1(new Error("User not found"), "User not found", res, 404);
     }
 
-    const response: SuccessResponse = {
+    let top5NewestSongs: any[] | null = null;
+    let albums: any[] | null = null;
+
+    if(user.verifyArtist === true) {
+      top5NewestSongs = await songModel.find({ artistId: user._id, deleted: false})
+      .sort({ createdAt: -1 }).limit(5);
+      albums = await albumModel.find({ artistId: user._id, deleted: false});
+    }
+
+    const playlists = await playlistModel.find({ idUser: user._id, deleted: false});
+
+    const response: GetUserInterface = {
       message: "User found",
-      user: user
+      user: user,
+      top5NewestSongs: top5NewestSongs,
+      playlists: playlists,
+      albums: albums
     };
     return res.status(200).json(response);
   } catch (error) {

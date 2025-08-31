@@ -4,7 +4,7 @@ import { resError1 } from "../../helper/resError.helper";
 import {
   ErrorResponse,
   SuccessResponse,
-} from "../../types/common/response.type";
+} from "../../interfaces/common/response.type";
 import User from "../../model/user.model";
 import {
   createSongSchema,
@@ -13,6 +13,9 @@ import {
 import genreModel from "../../model/genre.model";
 import mongoose from "mongoose";
 import albumModel from "../../model/album.model";
+import paginationHelper from "../../helper/pagination.helper";
+import { Pagination } from "../../interfaces/admin/common.interface";
+import { GetMySongInterface } from "../../interfaces/client/song.interface";
 
 const checkGenreAndAlbum = async (
   SongData: any,
@@ -160,14 +163,26 @@ export const getMySong = async (req: Request, res: Response): Promise<any> => {
     if (currentUser.verifyArtist === false)
       return resError1(null, "You are not an artist", res, 400);
 
+    //sort
+    const {sortKey, sortValue} = req.query;
+    const sort = {}
+    if(sortKey && sortValue) sort[sortKey+""] = sortValue;
+
+    // pagination
+    const page = +req.query.page || 1;
+    const limit = +req.query.limit || 8;
+    const objectPagination: Pagination = paginationHelper(page, limit, 
+      await songModel.countDocuments({ artistId: currentUser._id, deleted: false }));
+
     const songs = await songModel.find({
       artistId: currentUser._id,
       deleted: false,
-    });
+    }).sort(sort).skip(objectPagination.skip).limit(objectPagination.limit);
     
-    const response: SuccessResponse = {
+    const response: GetMySongInterface = {
       message: "Songs found",
-      data: songs,
+      songs,
+      pagination: objectPagination
     };
     return res.status(200).json(response);
   }
