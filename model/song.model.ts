@@ -18,6 +18,11 @@ const songSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  playCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   albumId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "album",

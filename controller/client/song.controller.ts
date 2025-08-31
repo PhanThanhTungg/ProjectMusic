@@ -8,6 +8,7 @@ import {
 import User from "../../model/user.model";
 import {
   createSongSchema,
+  incrementPlayCountSchema,
   updateSongSchema,
 } from "../../schema/client/song.schema";
 import genreModel from "../../model/genre.model";
@@ -16,6 +17,8 @@ import albumModel from "../../model/album.model";
 import paginationHelper from "../../helper/pagination.helper";
 import { Pagination } from "../../interfaces/admin/common.interface";
 import { GetMySongInterface } from "../../interfaces/client/song.interface";
+import playHistoryModel from "../../model/playHistory.model";
+import { PlayCountHelper } from "../../helper/playCount.helper";
 
 const checkGenreAndAlbum = async (
   SongData: any,
@@ -272,3 +275,168 @@ export const update = async (req: Request, res: Response): Promise<any> => {
     resError1(error, "error", res);
   }
 }
+
+export const incrementPlayCount = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { idSong } = req.params;
+    const currentUser = res.locals.user;
+
+    const incrementPlayCountData = incrementPlayCountSchema.safeParse(req.body);
+    if (!incrementPlayCountData.success) 
+      return resError1(incrementPlayCountData.error,JSON.parse(incrementPlayCountData.error.message)[0].message,res,400);
+    
+    const { playDuration, isCompleted } = incrementPlayCountData.data;
+
+    if (isCompleted && playDuration < 30) {
+      return resError1(null, "Cannot mark as completed with duration less than 30 seconds", res, 400);
+    }
+
+    const song = await songModel.findOne({
+      _id: idSong,
+      status: "active",
+      deleted: false
+    });
+
+    if (!song) {
+      return resError1(null, "Song not found or inactive", res, 404);
+    }
+
+    const ipAddress = req.ip || req.connection.remoteAddress;
+    const userAgent = req.get('User-Agent');
+
+    console.log(`Play count request - User: ${currentUser._id}, Song: ${idSong}, Duration: ${playDuration}s, Completed: ${isCompleted}, IP: ${ipAddress}`);
+
+    const result = await PlayCountHelper.incrementPlayCount(
+      currentUser._id.toString(),
+      song._id.toString(),
+      playDuration,
+      isCompleted,
+      ipAddress,
+      userAgent
+    );
+
+    if (!result.success) {
+      // Log failed attempts
+      console.warn(`Play count failed - User: ${currentUser._id}, Song: ${idSong}, Reason: ${result.message}`);
+      
+      // Nếu bị chặn do spam, trả về thông tin chi tiết
+      if (result.message.includes("suspicious activity")) {
+        return res.status(403).json({
+          message: result.message,
+          error: "SPAM_DETECTED",
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      return resError1(null, result.message, res, 400);
+    }
+
+    // Log successful operation
+    console.log(`Play count success - User: ${currentUser._id}, Song: ${idSong}, New Count: ${result.playCount}`);
+
+    const response: SuccessResponse = {
+      message: result.message,
+      data: {
+        playCount: result.playCount,
+        isNewPlay: result.isNewPlay,
+        songId: idSong,
+        timestamp: new Date().toISOString()
+      }
+    };
+
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error("Unexpected error in incrementPlayCount:", error);
+    return resError1(error, "Unexpected error occurred while incrementing play count", res);
+  }
+};
+
+export const getSongPlayStats = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { slug } = req.params;
+
+    const song = await songModel.findOne({
+      slug,
+      status: "active",
+      deleted: false
+    });
+
+    if (!song) {
+      return resError1(null, "Song not found", res, 404);
+    }
+
+    const { PlayCountHelper } = await import("../../helper/playCount.helper");
+    const stats = await PlayCountHelper.getSongPlayStats(song._id.toString());
+
+    if (!stats) {
+      return resError1(null, "Error getting song statistics", res, 500);
+    }
+
+    const response: SuccessResponse = {
+      message: "Song statistics retrieved successfully",
+      data: stats
+    };
+
+    return res.status(200).json(response);
+  } catch (error) {
+    return resError1(error, "Error getting song statistics", res);
+  }
+};
+
+export const getTopSongsByPlayCount = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const limit = +(req.query.limit as string) || 10;
+    
+    if (limit > 100) {
+      return resError1(null, "Limit cannot exceed 100", res, 400);
+    }
+
+    const { PlayCountHelper } = await import("../../helper/playCount.helper");
+    const topSongs = await PlayCountHelper.getTopSongsByPlayCount(limit);
+
+    const response: SuccessResponse = {
+      message: "Top songs by play count retrieved successfully",
+      data: topSongs
+    };
+
+    return res.status(200).json(response);
+  } catch (error) {
+    return resError1(error, "Error getting top songs", res);
+  }
+};
+
+export const getUserPlayHistory = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const currentUser = res.locals.user;
+    const page = +(req.query.page as string) || 1;
+    const limit = +(req.query.limit as string) || 20;
+
+    if (limit > 100) {
+      return resError1(null, "Limit cannot exceed 100", res, 400);
+    }
+
+    const objectPagination = paginationHelper(
+      page, 
+      limit, 
+      await playHistoryModel.countDocuments({ userId: currentUser._id })
+    );
+
+    const playHistory = await playHistoryModel.find({ userId: currentUser._id })
+      .populate('songId', 'title thumbnail slug artistId')
+      .sort({ playDate: -1 })
+      .skip(objectPagination.skip)
+      .limit(objectPagination.limit);
+
+    const response: SuccessResponse = {
+      message: "User play history retrieved successfully",
+      data: {
+        playHistory,
+        pagination: objectPagination
+      }
+    };
+
+    return res.status(200).json(response);
+  } catch (error) {
+    return resError1(error, "Error getting user play history", res);
+  }
+};

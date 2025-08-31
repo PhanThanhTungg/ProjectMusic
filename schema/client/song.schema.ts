@@ -12,5 +12,18 @@ export const createSongSchema = z.object({
   albumId: z.string().optional(),
   status: z.enum(["active", "inactive"]).optional()
 });
-
 export const updateSongSchema = createSongSchema.partial();
+
+
+export const createPlayHistorySchema = z.object({
+  songId: z.string("Song ID is required").min(1),
+  playDuration: z.number("Play duration must be a number").min(0).optional(),
+  isCompleted: z.boolean("Is completed must be a boolean").optional()
+});
+export const updatePlayHistorySchema = createPlayHistorySchema.partial();
+
+export const incrementPlayCountSchema = z.object({
+  playDuration: z.number("Play duration must be a number").min(0, "Play duration must be at least 0").max(3600, "Play duration cannot exceed 3600 seconds"),
+  isCompleted: z.boolean("isCompleted must be a boolean value")
+});
+

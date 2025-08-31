@@ -19,6 +19,13 @@ route.patch("/artist/update-song/:id", authAccessToken, controller.update);
 
 route.get("/artist/my-song", authAccessToken, controller.getMySong);
 
+// play count route
+route.get("/top/plays", controller.getTopSongsByPlayCount);
 
+route.get("/history", authAccessToken, controller.getUserPlayHistory);
+
+route.post("/play/:idSong", authAccessToken, controller.incrementPlayCount);
+
+route.get("/stats/:idSong", controller.getSongPlayStats);
 
 export default route;
