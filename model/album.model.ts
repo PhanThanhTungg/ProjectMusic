@@ -18,12 +18,10 @@ const albumSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "user"
   },
-  listFollowers: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "user"
-    }
-  ],
+  followCount: {
+    type: Number,
+    default: 0
+  },
   deleted: {
     type: Boolean,
     default: false

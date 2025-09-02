@@ -23,12 +23,10 @@ const playlistSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "user"
   },
-  listFollowers: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "user"
-    }
-  ],
+  followCount: {
+    type: Number,
+    default: 0
+  },
   songs: [
     {
       type: mongoose.Schema.Types.ObjectId,

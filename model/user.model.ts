@@ -30,6 +30,18 @@ const userSchema = new mongoose.Schema({
       ref: "song"
     }
   ],
+  albumsFollowed:[
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "album"
+    }
+  ],
+  playlistsFollowed:[
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "playlist"
+    }
+  ],
   verifyArtist:{
     type: Boolean,
     default: false

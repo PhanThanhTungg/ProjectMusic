@@ -250,6 +250,7 @@ export const addSongToAlbum = async (
 
 export const followAlbum = async (req: Request, res: Response): Promise<any> => {
   try {
+    const currentUser = res.locals.user;
     const idUser = res.locals.user.id;
     const idAlbum = req.params.albumId;
 
@@ -262,28 +263,56 @@ export const followAlbum = async (req: Request, res: Response): Promise<any> => 
       return resError1(null, "Album not found", res, 404);
     }
 
-    if(checkAlbum.listFollowers.includes(res.locals.user.id)){
-      await albumModel.updateOne(
-        {
-          _id: new mongoose.Types.ObjectId(idAlbum),
-        },
-        {
-          $pull: { listFollowers: new mongoose.Types.ObjectId(idUser) },
-        }
+    if(currentUser.albumsFollowed.includes(new mongoose.Types.ObjectId(idAlbum))){
+      currentUser.albumsFollowed = currentUser.albumsFollowed.filter(
+        (follower) => follower.toString() !== idAlbum
       );
+      const session = await mongoose.startSession();
+      try {
+        await session.withTransaction(async () => {
+          await currentUser.save({ session });
+          await albumModel.updateOne(
+            {
+              _id: new mongoose.Types.ObjectId(idAlbum),
+            },
+            {
+              $inc: { followCount: -1 },
+            },
+            { session }
+          );
+        });
+      } catch (error) {
+        await session.abortTransaction();
+        throw error;
+      } finally {
+        await session.endSession();
+      }
       const response: SuccessResponse = {
         message: "Unfollow album success",
       };
       return res.status(200).json(response);
     }else{
-      await albumModel.updateOne(
-        {
-          _id: new mongoose.Types.ObjectId(idAlbum),
-        },
-        {
-          $push: { listFollowers: new mongoose.Types.ObjectId(idUser) },
-        }
-      );
+      currentUser.albumsFollowed.push(new mongoose.Types.ObjectId(idAlbum));
+      const session = await mongoose.startSession();
+      try {
+        await session.withTransaction(async () => {
+          await currentUser.save({ session });
+          await albumModel.updateOne(
+            {
+              _id: new mongoose.Types.ObjectId(idAlbum),
+            },
+            {
+              $inc: { followCount: 1 },
+            },
+            { session }
+          );
+        });
+      } catch (error) {
+        await session.abortTransaction();
+        throw error;
+      } finally {
+        await session.endSession();
+      }
       const response: SuccessResponse = {
         message: "Follow album success",
       };

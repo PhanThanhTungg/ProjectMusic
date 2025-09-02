@@ -10,7 +10,7 @@ import { authAccessToken } from "../../middleware/client/auth.middleware";
 export default (app: Express)=>{
   app.use("/user", userRoute);
   app.use("/song", songRoute);
-  app.use("/playlist", authAccessToken, playlistRoute);
+  app.use("/playlist", playlistRoute);
   app.use("/album", albumRoute);
   app.use("/search", searchRoute);
 }

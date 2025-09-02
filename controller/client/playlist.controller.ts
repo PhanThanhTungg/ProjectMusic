@@ -35,11 +35,8 @@ export const getDetailPlaylist = async (
     const { slug } = req.params;
     const playlist = await Playlist.findOne({
       slug: slug
-    }).populate("songs").populate("idUser").lean();
-
-    playlist["user"] = playlist.idUser;
-    delete playlist.idUser;
-    delete playlist["user"].password;
+    }).populate("songs",)
+    .populate("idUser").lean();
 
     if(!playlist){
       return resError1(null, "Playlist not found", res, 404);
@@ -235,6 +232,7 @@ export const followPlaylist = async (
   res: Response
 ): Promise<any> => {
   try {
+    const currentUser = res.locals.user;
     const { id } = req.params;
 
     const playlist = await Playlist.findById(id);
@@ -246,17 +244,56 @@ export const followPlaylist = async (
       return resError1(null, "You are the owner of this playlist", res, 403);
     }
 
-    if (playlist.listFollowers.includes(new mongoose.Types.ObjectId(res.locals.user.id))) {
-      playlist.listFollowers = playlist.listFollowers.filter(
-        (follower) => follower.toString() !== res.locals.user.id
+    if (currentUser.playlistsFollowed.includes(new mongoose.Types.ObjectId(id))) {
+      currentUser.playlistsFollowed = currentUser.playlistsFollowed.filter(
+        (follower) => follower.toString() !== id
       );
-      await playlist.save();
+      const session = await mongoose.startSession();
+      try {
+        await session.withTransaction(async () => {
+          await currentUser.save({ session });
+          
+          await Playlist.updateOne(
+            {
+              _id: id,
+            },
+            {
+              $inc: { followCount: -1 },
+            },
+            { session }
+          );
+        });
+      } catch (error) {
+        await session.abortTransaction();
+        throw error;
+      } finally {
+        await session.endSession();
+      }
+
       const response: SuccessResponse = {
         message: "Unfollow playlist successfully",
       };
       return res.status(200).json(response);
     }else{
-      playlist.listFollowers.push(new mongoose.Types.ObjectId(res.locals.user.id));
+      currentUser.playlistsFollowed.push(new mongoose.Types.ObjectId(id));
+      const session = await mongoose.startSession();
+      try {
+        await session.withTransaction(async () => {
+          await currentUser.save({ session });
+          
+          await Playlist.updateOne(
+            {
+              _id: id,
+            },
+            {
+              $inc: { followCount: 1 },
+            },
+            { session }
+          );
+        });
+      } finally {
+        await session.endSession();
+      }
       await playlist.save();
       const response: SuccessResponse = {
         message: "Follow playlist successfully",

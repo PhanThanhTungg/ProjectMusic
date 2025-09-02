@@ -52,7 +52,7 @@ export const authAccessToken = async (req:Request, res:Response, next: NextFunct
     }
     return res.status(401).json(response);
   }
-  const user = await User.findOne({ _id: userId });
+  const user = await User.findOne({ _id: userId }).select("-password -songsLiked -albumsFollowed -playlistsFollowed");
   if (!user) {
     const response = {
       error: "Unauthorized access",
@@ -62,7 +62,47 @@ export const authAccessToken = async (req:Request, res:Response, next: NextFunct
   }
 
   res.locals.user = user;
-
-  console.log("tokenDecoded", tokenDecoded);
   next();
+}
+
+export const checkUser = async (req:Request, res:Response, next: NextFunction): Promise<any> => {
+  try {
+    // check bearer token
+    const bearerToken = req.headers.authorization;
+    if (!bearerToken) {
+      return next();
+    }
+
+    // extract access token
+    const accessToken = bearerToken.split(" ")[1];
+    if (!accessToken) {
+      return next();
+    }
+
+    // verify access token
+    const tokenDecoded: tokenDecoded = verifyToken(accessToken, "access");
+    if (!tokenDecoded) {
+      return next();
+    }
+
+    // verify user
+    if(tokenDecoded.type !== "user"){
+      return next();
+    }
+
+    // find user in database
+    const userId = tokenDecoded.id;
+    if (!userId) {
+      return next();
+    }
+    const user = await User.findOne({ _id: userId });
+    if (!user) {
+      return next();
+    }
+
+    res.locals.user = user;
+    next();
+  } catch (error) {
+    next();
+  }
 }

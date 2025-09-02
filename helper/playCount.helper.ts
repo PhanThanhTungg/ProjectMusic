@@ -20,17 +20,12 @@ export class PlayCountHelper {
     const session = await mongoose.startSession();
     try {
       await session.withTransaction(async () => {
-        if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(songId)) {
-          throw new Error("Invalid user ID or song ID");
-        }
+        if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(songId)) throw new Error("Invalid user ID or song ID");
+        
 
-        if (playDuration < 0 || playDuration > this.MAX_DURATION) {
-          throw new Error(`Invalid play duration (must be between 0 and ${this.MAX_DURATION} seconds)`);
-        }
+        if (playDuration < 0 || playDuration > this.MAX_DURATION) throw new Error(`Invalid play duration (must be between 0 and ${this.MAX_DURATION} seconds)`);
 
-        if (isCompleted && playDuration < this.MIN_VALID_DURATION) {
-          throw new Error(`Cannot mark as completed with duration less than ${this.MIN_VALID_DURATION} seconds`);
-        }
+        if (isCompleted && playDuration < this.MIN_VALID_DURATION) throw new Error(`Cannot mark as completed with duration less than ${this.MIN_VALID_DURATION} seconds`);
 
         const song = await songModel.findOne({
           _id: new mongoose.Types.ObjectId(songId),
@@ -38,9 +33,7 @@ export class PlayCountHelper {
           deleted: false
         }).session(session);
 
-        if (!song) {
-          throw new Error("Song not found or inactive");
-        }
+        if (!song) throw new Error("Song not found or inactive");
 
         const spamCheck = await AntiSpamHelper.checkSpam(
           userId,
@@ -50,13 +43,9 @@ export class PlayCountHelper {
           userAgent || ''
         );
 
-        if (spamCheck.shouldBlock) {
-          throw new Error(`Request blocked due to suspicious activity: ${spamCheck.reason}`);
-        }
+        if (spamCheck.shouldBlock) throw new Error(`Request blocked due to suspicious activity: ${spamCheck.reason}`);
 
-        if (spamCheck.isSpam) {
-          console.warn(`SPAM DETECTED - User: ${userId}, Song: ${songId}, Reason: ${spamCheck.reason}, Risk Score: ${spamCheck.riskScore}`);
-        }
+        if (spamCheck.isSpam) console.warn(`SPAM DETECTED - User: ${userId}, Song: ${songId}, Reason: ${spamCheck.reason}, Risk Score: ${spamCheck.riskScore}`);
 
         const rateLimitStart = new Date(Date.now() - this.RATE_LIMIT_WINDOW * 1000);
         const recentPlayCount = await playHistoryModel.countDocuments({
