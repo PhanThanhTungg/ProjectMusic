@@ -124,7 +124,7 @@ export const getAll = async (req: Request, res: Response): Promise<any> => {
       .populate("artistId", "fullName")
       .populate("albumId", "title slug")
       .populate("collaborationArtistIds", "fullName")
-      .select("-background -description -lyrics -audio -updatedAt -__v ");
+      .select("-background -description -lyrics -updatedAt -__v");
 
     const response: SuccessResponse = {
       message: "Songs found",
@@ -248,7 +248,6 @@ export const like = async (req: Request, res: Response): Promise<any> => {
         message: "Song not found",
       });
     }
-
     // Check if the user has already liked the song
     if (res.locals.user.songsLiked.includes(song._id)) {
       const session = await mongoose.startSession();
@@ -287,7 +286,6 @@ export const like = async (req: Request, res: Response): Promise<any> => {
       };
       return res.status(200).json(response);
     }
-
     const session = await mongoose.startSession();
     session.startTransaction();
     try {

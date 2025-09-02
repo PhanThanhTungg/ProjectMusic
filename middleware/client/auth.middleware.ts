@@ -52,7 +52,7 @@ export const authAccessToken = async (req:Request, res:Response, next: NextFunct
     }
     return res.status(401).json(response);
   }
-  const user = await User.findOne({ _id: userId }).select("-password -songsLiked -albumsFollowed -playlistsFollowed");
+  const user = await User.findOne({ _id: userId }).select("-password");
   if (!user) {
     const response = {
       error: "Unauthorized access",
