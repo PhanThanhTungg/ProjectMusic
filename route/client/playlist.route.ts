@@ -7,7 +7,7 @@ route.get("/follow",authAccessToken,controller.getListFollowPlaylist);
 
 route.post("/follow/:id", authAccessToken, controller.followPlaylist);
 
-route.get("/", controller.getAllPlaylistOfUser);
+route.get("/", authAccessToken,controller.getAllPlaylistOfUser);
 
 route.post("/", authAccessToken ,controller.createPlaylist);
 
