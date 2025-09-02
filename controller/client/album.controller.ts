@@ -54,20 +54,20 @@ export const getDetailAlbum = async (
   res: Response
 ): Promise<any> => {
   try {
-    const album = await albumModel
-      .findOne({
-        _id: new mongoose.Types.ObjectId(req.params.id),
-        deleted: false,
-      })
-      .populate("songs")
-      .populate("idArtist")
-      .select("-__v")
-      .lean();
+    const album = await albumModel.findOne({
+      _id: new mongoose.Types.ObjectId(req.params.id),
+      deleted: false,
+    }).populate("idArtist", "fullName avatar").lean();
 
-    album["artist"] = album.idArtist;
-    delete album.idArtist;
-    delete album["artist"].password;
-    delete album["artist"]["__v"];
+    const songs = await songModel.find({
+      albumId: new mongoose.Types.ObjectId(req.params.id),
+      status: "active",
+      deleted: false,
+    }).populate("artistId", "fullName avatar")
+    .populate("collaborationArtistIds", "fullName avatar")
+    .lean();
+
+    album["songs"] = songs;
 
     if (!album) {
       return resError1(null, "Album not found", res, 404);
