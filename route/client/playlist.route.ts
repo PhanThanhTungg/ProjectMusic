@@ -1,7 +1,7 @@
 import {Router} from 'express';
 const route: Router = Router();
 import * as controller from "../../controller/client/playlist.controller";
-import { authAccessToken } from '../../middleware/admin/auth.middleware';
+import { authAccessToken } from '../../middleware/client/auth.middleware';
 
 route.get("/follow",authAccessToken,controller.getListFollowPlaylist);
 
