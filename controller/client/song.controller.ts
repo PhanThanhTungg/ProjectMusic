@@ -19,6 +19,7 @@ import { Pagination } from "../../interfaces/admin/common.interface";
 import { GetMySongInterface } from "../../interfaces/client/song.interface";
 import playHistoryModel from "../../model/playHistory.model";
 import { PlayCountHelper } from "../../helper/playCount.helper";
+import userModel from "../../model/user.model";
 
 const checkGenreAndAlbum = async (
   SongData: any,
@@ -239,6 +240,34 @@ export const like = async (req: Request, res: Response): Promise<any> => {
     return resError1(error, error.message || "error", res, 500);
   }
 };
+
+export const getAllLike = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const currentUser = res.locals.user;
+    const songs = await userModel.findOne({
+      _id: currentUser._id
+    }).populate({
+      path: "songsLiked",
+      populate: [{
+        path: "artistId",
+        select: "fullName"
+      },{
+        path: "albumId",
+        select: "title slug"
+      },{
+        path: "collaborationArtistIds",
+        select: "fullName"
+      }]
+    }).select("songsLiked");
+
+    return res.status(200).json({
+      message: "Get all like successfully",
+      songsLiked: songs.songsLiked
+    });
+  } catch (error) {
+    return resError1(error, error.message || "error", res, 500);
+  }
+}
 
 export const update = async (req: Request, res: Response): Promise<any> => {
   try {

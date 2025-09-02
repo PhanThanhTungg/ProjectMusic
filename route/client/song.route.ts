@@ -6,6 +6,8 @@ import {authAccessToken} from "../../middleware/client/auth.middleware";
 // route for all user
 route.get("/getAll", controller.getAll);
 
+route.get("/getAllLike", authAccessToken, controller.getAllLike);
+
 route.get("/detail/:slug", controller.getDetail);
 
 route.get("/song-of-artist/:artistId", controller.getSongOfArtist);
