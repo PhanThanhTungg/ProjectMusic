@@ -10,7 +10,8 @@ export const createSongSchema = z.object({
   genreId: z.string("Genre is required"),
   collaborationArtistIds: z.array(z.string()).optional(),
   albumId: z.string().optional(),
-  status: z.enum(["active", "inactive"]).optional()
+  status: z.enum(["active", "inactive"]).optional(),
+  deleted: z.boolean("Deleted must be a boolean").optional()
 });
 export const updateSongSchema = createSongSchema.partial();
 
