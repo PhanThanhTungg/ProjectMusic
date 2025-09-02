@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import { ErrorResponse, SuccessResponse } from "../../interfaces/common/response.type";
+import { ErrorResponse, SuccessResponse } from "../../interfaces/common/response.interface";
 import { genAccessToken, genRefreshToken, verifyToken } from "../../helper/jwtToken.helper";
 import { saveCookie } from "../../helper/httpOnly.helper";
 import User from "../../model/user.model";
@@ -35,11 +35,7 @@ export const register = async (req: Request, res: Response): Promise<any> => {
     };
     return res.status(201).json(response);
   } catch (error) {
-    const response: ErrorResponse = {
-      message: "Internal server error",
-      error: error
-    };
-    return res.status(500).json(response);
+    return resError1(error, error.message || "Internal server error", res, 500);
   }
 }
 
@@ -69,8 +65,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     return res.status(200).json(response);
 
   } catch (error) {
-    console.log(error);
-    return resError1(error, "Internal server error", res);
+    return resError1(error, error.message || "Internal server error", res, 500);
   }
 }
 
@@ -79,11 +74,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<any> =>
     const refreshToken: string = req.cookies["userRefreshToken"];
 
     if (!refreshToken) {
-      const response: ErrorResponse = {
-        message: "No refresh token provided",
-        error: "Unauthorized"
-      };
-      return res.status(401).json(response);
+      return resError1(new Error("No refresh token provided"), "No refresh token provided", res, 401);
     }
 
     const refreshTokenDecoded: tokenDecoded | null = verifyToken(refreshToken, "refresh");
@@ -96,13 +87,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<any> =>
     if (type !== "user") return resError1(new Error("Invalid token type"), "Invalid token type", res, 403);
     
     const user = await User.findOne({ _id: userId });
-    if (!user) {
-      const response: ErrorResponse = {
-        message: "User not found",
-        error: "Not Found"
-      };
-      return res.status(404).json(response);
-    }
+    if (!user) return resError1(new Error("User not found"), "User not found", res, 404);
 
     const newAccessToken: string = genAccessToken(user._id.toString(), "user");
     const newRefreshToken: string = genRefreshToken(user._id.toString(), "user");
@@ -115,12 +100,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<any> =>
     return res.status(200).json(response);
 
   } catch (error) {
-    console.log(error);
-    const response: ErrorResponse = {
-      message: "Internal server error",
-      error: error
-    };
-    return res.status(500).json(response);
+    return resError1(error, error.message || "Internal server error", res, 500);
   }
 }
 
@@ -130,9 +110,7 @@ export const getUser = async (req: Request, res: Response): Promise<any> => {
     const user = await User.findOne({ _id: id, deleted: false, status: "active" })
       .select("-password -deleted -status -updatedAt");
 
-    if (!user) {
-      return resError1(new Error("User not found"), "User not found", res, 404);
-    }
+    if (!user) return resError1(new Error("User not found"), "User not found", res, 404);
 
     let top5NewestSongs: any[] | null = null;
     let albums: any[] | null = null;
@@ -154,7 +132,7 @@ export const getUser = async (req: Request, res: Response): Promise<any> => {
     };
     return res.status(200).json(response);
   } catch (error) {
-    return resError1(error, "Internal server error", res);
+    return resError1(error, error.message || "Internal server error", res, 500);
   }
 }
 

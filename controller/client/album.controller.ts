@@ -6,7 +6,7 @@ import {
 import { resError1 } from "../../helper/resError.helper";
 import albumModel from "../../model/album.model";
 import mongoose from "mongoose";
-import { SuccessResponse } from "../../interfaces/common/response.type";
+import { SuccessResponse } from "../../interfaces/common/response.interface";
 import songModel from "../../model/song.model";
 
 export const getAlbum = async (req: Request, res: Response): Promise<any> => {

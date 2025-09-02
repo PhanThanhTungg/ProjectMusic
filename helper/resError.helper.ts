@@ -1,4 +1,4 @@
-import { ErrorResponse } from "../interfaces/common/response.type";
+import { ErrorResponse } from "../interfaces/common/response.interface";
 
 export const resError1 = (error:any,message: string,res:any, statusCode: number = 500)=>{
   console.log("Have error: "+error);
@@ -6,5 +6,5 @@ export const resError1 = (error:any,message: string,res:any, statusCode: number 
     message,
     error
   }
-  res.status(statusCode).json(errorResponse);
+  return res.status(statusCode).json(errorResponse);
 }

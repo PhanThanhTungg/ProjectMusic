@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Admin from "../../model/admin.model";
 import bcrypt from "bcrypt";
-import { ErrorResponse, SuccessResponse } from "../../interfaces/common/response.type";
+import { ErrorResponse, SuccessResponse } from "../../interfaces/common/response.interface";
 import { genAccessToken, genRefreshToken, verifyToken } from "../../helper/jwtToken.helper";
 import { saveCookie } from "../../helper/httpOnly.helper";
 import { tokenDecoded } from "../../interfaces/admin/auth.interface";

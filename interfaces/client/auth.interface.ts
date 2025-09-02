@@ -1,4 +1,4 @@
-import { SuccessResponse } from "../common/response.type";
+import { SuccessResponse } from "../common/response.interface";
 
 export interface AuthLoginSuccess extends SuccessResponse{
   accessToken: string;

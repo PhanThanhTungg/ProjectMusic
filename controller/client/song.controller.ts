@@ -4,7 +4,7 @@ import { resError1 } from "../../helper/resError.helper";
 import {
   ErrorResponse,
   SuccessResponse,
-} from "../../interfaces/common/response.type";
+} from "../../interfaces/common/response.interface";
 import User from "../../model/user.model";
 import {
   createSongSchema,
@@ -118,19 +118,15 @@ export const getDetail = async (req: Request, res: Response): Promise<any> => {
       deleted: false,
     });
 
-    if (!song) {
-      const response: ErrorResponse = {
-        message: "Song not found",
-      };
-    }
-
+    if (!song) return resError1(null, "Song not found", res, 404);
+    
     const response: SuccessResponse = {
       message: "Song found",
       data: song,
     };
-    res.status(200).json(response);
+    return res.status(200).json(response);
   } catch (error) {
-    resError1(error, "error", res);
+    return resError1(error, error.message || "error", res, 500);
   }
 };
 
@@ -238,9 +234,9 @@ export const like = async (req: Request, res: Response): Promise<any> => {
     const response: SuccessResponse = {
       message: "Song liked successfully",
     };
-    res.status(200).json(response);
+    return res.status(200).json(response);
   } catch (error) {
-    resError1(error, "error", res);
+    return resError1(error, error.message || "error", res, 500);
   }
 };
 
