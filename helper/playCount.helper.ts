@@ -17,6 +17,12 @@ export class PlayCountHelper {
     ipAddress?: string,
     userAgent?: string
   ): Promise<PlayCountResult> {
+    if(playDuration < this.MIN_VALID_DURATION) {
+      return {
+        success: false,
+        message: "Play duration is less than 30 seconds"
+      };
+    }
     const session = await mongoose.startSession();
     try {
       let result: PlayCountResult;
@@ -118,8 +124,6 @@ export class PlayCountHelper {
 
     } catch (error) {
       console.error("Error in incrementPlayCount:", error);
-      
-      // KHÔNG gọi abortTransaction() thủ công vì withTransaction() đã xử lý
       return {
         success: false,
         message: error instanceof Error ? error.message : "Internal server error"
