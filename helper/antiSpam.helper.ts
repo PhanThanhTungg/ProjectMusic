@@ -16,7 +16,7 @@ export class AntiSpamHelper {
   };
 
   static async checkSpam(
-    userId: string,
+    userId: string | null,
     songId: string,
     playDuration: number,
     ipAddress: string,
@@ -24,10 +24,10 @@ export class AntiSpamHelper {
   ): Promise<SpamCheckResult> {
     try {
       const checks = await Promise.all([
-        this.checkUserBehavior(userId, songId),
+        userId ? this.checkUserBehavior(userId, songId) : this.getSkippedCheck('No user ID - anonymous user'),
         this.checkIPBehavior(ipAddress, songId),
         this.checkUserAgent(userAgent),
-        this.checkGeographicAnomaly(ipAddress, userId)
+        userId ? this.checkGeographicAnomaly(ipAddress, userId) : this.getSkippedCheck('No user ID for geographic check')
       ]);
 
       // Tính risk score tổng hợp
@@ -59,6 +59,15 @@ export class AntiSpamHelper {
         shouldBlock: false
       };
     }
+  }
+
+  private static getSkippedCheck(reason: string): SpamCheckResult {
+    return {
+      isSpam: false,
+      reason,
+      riskScore: 0,
+      shouldBlock: false
+    };
   }
 
   private static async checkUserBehavior(userId: string, songId: string): Promise<SpamCheckResult> {
@@ -203,7 +212,15 @@ export class AntiSpamHelper {
     };
   }
 
-  private static async checkGeographicAnomaly(ipAddress: string, userId: string): Promise<SpamCheckResult> {
+  private static async checkGeographicAnomaly(ipAddress: string, userId: string | null): Promise<SpamCheckResult> {
+    if (!userId) {
+      return {
+        isSpam: false,
+        reason: 'No user ID for geographic check',
+        riskScore: 0,
+        shouldBlock: false
+      };
+    }
     const recentPlays = await playHistoryModel.find({
       userId: new mongoose.Types.ObjectId(userId)
     })

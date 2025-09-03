@@ -1,7 +1,7 @@
 import {Router} from 'express';
 const  route: Router = Router();
 import * as controller from "../../controller/client/song.controller";
-import {authAccessToken} from "../../middleware/client/auth.middleware";
+import {authAccessToken, checkUser} from "../../middleware/client/auth.middleware";
 
 // route for all user
 route.get("/getAll", controller.getAll);
@@ -26,7 +26,7 @@ route.get("/top/plays", controller.getTopSongsByPlayCount);
 
 route.get("/history", authAccessToken, controller.getUserPlayHistory);
 
-route.post("/play/:idSong", controller.incrementPlayCount);
+route.post("/play/:idSong", checkUser, controller.incrementPlayCount);
 
 route.get("/stats/:idSong", controller.getSongPlayStats);
 

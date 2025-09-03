@@ -9,7 +9,7 @@ export interface GetMySongInterface extends SuccessResponse {
 }
 
 export interface PlayHistoryInterface {
-  userId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId | null;
   songId: mongoose.Types.ObjectId;
   playDuration?: number;
   isCompleted?: boolean;

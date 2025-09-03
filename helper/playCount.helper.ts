@@ -10,7 +10,7 @@ export class PlayCountHelper {
   private static readonly RATE_LIMIT_WINDOW = 30; 
 
   static async incrementPlayCount(
-    userId: string,
+    userId: string | null,
     songId: string,
     playDuration: number = 0,
     isCompleted: boolean = false,
@@ -19,8 +19,10 @@ export class PlayCountHelper {
   ): Promise<PlayCountResult> {
     const session = await mongoose.startSession();
     try {
+      let result: PlayCountResult;
+      
       await session.withTransaction(async () => {
-        if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(songId)) throw new Error("Invalid user ID or song ID");
+        if ((userId && !mongoose.Types.ObjectId.isValid(userId)) || !mongoose.Types.ObjectId.isValid(songId)) throw new Error("Invalid user ID or song ID");
         
 
         if (playDuration < 0 || playDuration > this.MAX_DURATION) throw new Error(`Invalid play duration (must be between 0 and ${this.MAX_DURATION} seconds)`);
@@ -45,14 +47,27 @@ export class PlayCountHelper {
 
         if (spamCheck.shouldBlock) throw new Error(`Request blocked due to suspicious activity: ${spamCheck.reason}`);
 
-        if (spamCheck.isSpam) console.warn(`SPAM DETECTED - User: ${userId}, Song: ${songId}, Reason: ${spamCheck.reason}, Risk Score: ${spamCheck.riskScore}`);
+        if (spamCheck.isSpam) console.warn(`SPAM DETECTED - User: ${userId || 'Anonymous'}, Song: ${songId}, Reason: ${spamCheck.reason}, Risk Score: ${spamCheck.riskScore}`);
 
         const rateLimitStart = new Date(Date.now() - this.RATE_LIMIT_WINDOW * 1000);
-        const recentPlayCount = await playHistoryModel.countDocuments({
-          userId: new mongoose.Types.ObjectId(userId),
-          songId: new mongoose.Types.ObjectId(songId),
-          playDate: { $gte: rateLimitStart }
-        }).session(session);
+        
+        // Rate limit check - different logic for authenticated vs anonymous users
+        let recentPlayCount = 0;
+        if (userId) {
+          // For authenticated users, check by userId and songId
+          recentPlayCount = await playHistoryModel.countDocuments({
+            userId: new mongoose.Types.ObjectId(userId),
+            songId: new mongoose.Types.ObjectId(songId),
+            playDate: { $gte: rateLimitStart }
+          }).session(session);
+        } else {
+          // For anonymous users, check by IP and songId (more lenient)
+          recentPlayCount = await playHistoryModel.countDocuments({
+            ipAddress: ipAddress || '',
+            songId: new mongoose.Types.ObjectId(songId),
+            playDate: { $gte: rateLimitStart }
+          }).session(session);
+        }
 
         if (recentPlayCount > 0) {
           throw new Error("Please wait before incrementing play count again");
@@ -64,7 +79,7 @@ export class PlayCountHelper {
           ipAddress?: string;
           userAgent?: string;
         } = {
-          userId: new mongoose.Types.ObjectId(userId),
+          userId: userId ? new mongoose.Types.ObjectId(userId) : null,
           songId: new mongoose.Types.ObjectId(songId),
           playDuration,
           isCompleted,
@@ -82,9 +97,10 @@ export class PlayCountHelper {
           );
         }
 
-        console.log(`Play count operation - User: ${userId}, Song: ${songId}, Duration: ${playDuration}s, Completed: ${isCompleted}, Valid: ${isNewPlay}`);
+        console.log(`Play count operation - User: ${userId || 'Anonymous'}, Song: ${songId}, Duration: ${playDuration}s, Completed: ${isCompleted}, Valid: ${isNewPlay}`);
 
-        return {
+        // Lưu kết quả vào biến thay vì return
+        result = {
           success: true,
           message: isNewPlay ? "Play count incremented successfully" : "Play history recorded but play count not incremented (insufficient duration)",
           playCount: isNewPlay ? (song.playCount + 1) : song.playCount,
@@ -97,19 +113,13 @@ export class PlayCountHelper {
         writeConcern: { w: 'majority' }
       });
 
-      return {
-        success: true,
-        message: "Play count operation completed successfully",
-        playCount: 0, 
-        isNewPlay: false,
-        spamCheck: undefined
-      };
+      // Return kết quả sau khi transaction thành công
+      return result!;
 
     } catch (error) {
       console.error("Error in incrementPlayCount:", error);
       
-      await session.abortTransaction();
-      
+      // KHÔNG gọi abortTransaction() thủ công vì withTransaction() đã xử lý
       return {
         success: false,
         message: error instanceof Error ? error.message : "Internal server error"

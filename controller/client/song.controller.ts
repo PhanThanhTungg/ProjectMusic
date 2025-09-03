@@ -407,7 +407,7 @@ export const incrementPlayCount = async (
 ): Promise<any> => {
   try {
     const { idSong } = req.params;
-    const currentUser = res.locals.user;
+    const currentUser = res.locals.user; // Có thể undefined cho người dùng ẩn danh
 
     const incrementPlayCountData = incrementPlayCountSchema.safeParse(req.body);
     if (!incrementPlayCountData.success)
@@ -443,11 +443,11 @@ export const incrementPlayCount = async (
     const userAgent = req.get("User-Agent");
 
     console.log(
-      `Play count request - User: ${currentUser._id}, Song: ${idSong}, Duration: ${playDuration}s, Completed: ${isCompleted}, IP: ${ipAddress}`
+      `Play count request - User: ${currentUser?._id || 'Anonymous'}, Song: ${idSong}, Duration: ${playDuration}s, Completed: ${isCompleted}, IP: ${ipAddress}`
     );
 
     const result = await PlayCountHelper.incrementPlayCount(
-      currentUser._id.toString(),
+      currentUser?._id?.toString() || null,
       song._id.toString(),
       playDuration,
       isCompleted,
@@ -458,7 +458,7 @@ export const incrementPlayCount = async (
     if (!result.success) {
       // Log failed attempts
       console.warn(
-        `Play count failed - User: ${currentUser._id}, Song: ${idSong}, Reason: ${result.message}`
+        `Play count failed - User: ${currentUser?._id || 'Anonymous'}, Song: ${idSong}, Reason: ${result.message}`
       );
 
       // Nếu bị chặn do spam, trả về thông tin chi tiết
@@ -475,7 +475,7 @@ export const incrementPlayCount = async (
 
     // Log successful operation
     console.log(
-      `Play count success - User: ${currentUser._id}, Song: ${idSong}, New Count: ${result.playCount}`
+      `Play count success - User: ${currentUser?._id || 'Anonymous'}, Song: ${idSong}, New Count: ${result.playCount}`
     );
 
     const response: SuccessResponse = {
