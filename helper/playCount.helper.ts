@@ -173,29 +173,6 @@ export class PlayCountHelper {
     }
   }
 
-  static async getTopSongsByPlayCount(limit: number = 10, offset: number = 0) {
-    try {
-      if (limit > 100) limit = 100;
-      if (offset < 0) offset = 0;
-
-      const topSongs = await songModel.find({
-        status: "active",
-        deleted: false,
-        playCount: { $gt: 0 } 
-      })
-      .sort({ playCount: -1, createdAt: -1 }) 
-      .skip(offset)
-      .limit(limit)
-      .select('title thumbnail playCount slug artistId createdAt')
-      .lean(); 
-
-      return topSongs;
-    } catch (error) {
-      console.error("Error getting top songs:", error);
-      return [];
-    }
-  }
-
   static async batchUpdatePlayCounts(songUpdates: Array<{songId: string, increment: number}>) {
     try {
       const bulkOps = songUpdates.map(update => ({

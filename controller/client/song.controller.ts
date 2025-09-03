@@ -539,21 +539,56 @@ export const getTopSongsByPlayCount = async (
   res: Response
 ): Promise<any> => {
   try {
-    const limit = +(req.query.limit as string) || 10;
-
-    if (limit > 100) {
-      return resError1(null, "Limit cannot exceed 100", res, 400);
+    const limit:number = +req.query.limit || 10;
+    const country:string = req.query.country+"";
+    if(!country) {
+      return resError1(null, "Country is not provided in the query", res, 400);
     }
 
-    const { PlayCountHelper } = await import("../../helper/playCount.helper");
-    const topSongs = await PlayCountHelper.getTopSongsByPlayCount(limit);
+    const pipeline: any[] = [
+      {
+        $match: {
+          status: "active",
+          deleted: false
+        }
+      },
+      {
+        $lookup: {
+          from: "User",
+          localField: "artistId",
+          foreignField: "_id",
+          as: "artist"
+        }
+      },
+      {
+        $unwind: "$artist"
+      }
+    ];
+
+    if (country) {
+      pipeline.push({
+        $match: {
+          "artist.country": country
+        }
+      });
+    }
+    pipeline.push(
+      {
+        $sort: { playCount: -1 }
+      },
+      {
+        $limit: limit
+      }
+    );
+
+    const topSongs = await songModel.aggregate(pipeline);
 
     const response: SuccessResponse = {
       message: "Top songs by play count retrieved successfully",
-      data: topSongs,
+      data: topSongs
     };
-
     return res.status(200).json(response);
+    
   } catch (error) {
     return resError1(error, "Error getting top songs", res);
   }
