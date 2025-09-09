@@ -562,6 +562,42 @@ export const getTopSongsByPlayCount = async (
       },
       {
         $unwind: "$artist"
+      },
+      {
+        $lookup: {
+          from: "User",
+          localField: "collaborationArtistIds",
+          foreignField: "_id",
+          as: "collaborationArtists"
+        }
+      },
+      {
+        $lookup: {
+          from: "Album",
+          localField: "albumId",
+          foreignField: "_id",
+          as: "album"
+        }
+      },
+      {
+        $unwind: {
+          path: "$album",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: "Genre",
+          localField: "genreId",
+          foreignField: "_id",
+          as: "genre"
+        }
+      },
+      {
+        $unwind: {
+          path: "$genre",
+          preserveNullAndEmptyArrays: true
+        }
       }
     ];
 

@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import { resError1 } from "../../helper/resError.helper";
 import songModel from "../../model/song.model";
 import { SuccessResponse } from "../../interfaces/common/response.interface";
+import playlistModel from "../../model/playlist.model";
 
 export const getAllPlaylistOfUser = async (
   req: Request,
@@ -35,7 +36,27 @@ export const getDetailPlaylist = async (
     const { slug } = req.params;
     const playlist = await Playlist.findOne({
       slug: slug
-    }).populate("songs",)
+    }).populate({
+      path: "songs",
+      populate: [
+        {
+          path: "artistId",
+          select: "fullName avatar"
+        },
+        {
+          path: "collaborationArtistIds",
+          select: "fullName avatar"
+        },
+        {
+          path: "albumId",
+          select: "title thumbnail"
+        },
+        {
+          path: "genreId",
+          select: "name"
+        }
+      ]
+    })
     .populate("idUser").lean();
 
     if(!playlist){
@@ -99,7 +120,6 @@ export const updatePlaylist = async (
       return resError1(null, "Playlist not found", res, 404);
     }
 
-    // check user is owner of playlist
     if (playlist.idUser.toString() !== res.locals.user.id) {
       return resError1(null, "You are not the owner of this playlist", res, 403);
     }
@@ -212,10 +232,24 @@ export const getListFollowPlaylist = async (
   res: Response
 ): Promise<any> => {
   try {
-    const playlists = await Playlist.aggregate([
-      { $match: { listFollowers: { $in: [new mongoose.Types.ObjectId(res.locals.user.id)] } } },
-      { $addFields: { songsCount: { $size: "$songs" } } },
-      { $project: { songs: 0, __v: 0 } }
+    const currentUser = res.locals.user;
+    const playlists = await playlistModel.aggregate([
+      {
+        $match: {
+          _id: { $in: currentUser.playlistsFollowed }
+        }
+      },
+      {
+        $addFields: {
+          songsCount: { $size: "$songs" }
+        }
+      },
+      {
+        $project: {
+          songs: 0,
+          __v: 0
+        }
+      }
     ]);
     const response: SuccessResponse = {
       message: "Get list follow playlist successfully",

@@ -11,6 +11,8 @@ route.post("/auth/login",controller.login);
 
 route.post("/auth/refreshToken",controller.refreshToken);
 
+route.post("/auth/logout", controller.logout);
+
 route.get("/artists", authAccessToken, controller.getAllArtists);
 
 route.get("/:id", controller.getUser);

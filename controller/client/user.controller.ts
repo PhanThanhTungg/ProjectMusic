@@ -104,6 +104,18 @@ export const refreshToken = async (req: Request, res: Response): Promise<any> =>
   }
 }
 
+export const logout = async (req: Request, res: Response): Promise<any> => {
+  try {
+    res.clearCookie("userRefreshToken");
+    const response: SuccessResponse = {
+      message: "Logout successful"
+    }
+    return res.status(200).json(response);
+  } catch (error) {
+    return resError1(error, error.message || "Internal server error", res, 500);
+  }
+}
+
 export const getUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
@@ -117,6 +129,10 @@ export const getUser = async (req: Request, res: Response): Promise<any> => {
 
     if(user.verifyArtist === true) {
       top5NewestSongs = await songModel.find({ artistId: user._id, deleted: false})
+      .populate("artistId", "fullName avatar")
+      .populate("collaborationArtistIds", "fullName avatar")
+      .populate("albumId", "title thumbnail")
+      .populate("genreId", "title")
       .sort({ createdAt: -1 }).limit(5);
       albums = await albumModel.find({ idArtist: user._id, deleted: false});
     }
