@@ -3,8 +3,8 @@ import userRoute from "./user.route";
 import playlistRoute from "./playlist.route";
 import albumRoute from "./album.route";
 import searchRoute from "./search.route";
+import recommendationRoute from "./recommendation.route";
 import {Express} from "express";
-import { authAccessToken } from "../../middleware/client/auth.middleware";
 
 
 export default (app: Express)=>{
@@ -13,4 +13,5 @@ export default (app: Express)=>{
   app.use("/playlist", playlistRoute);
   app.use("/album", albumRoute);
   app.use("/search", searchRoute);
+  app.use("/recommendation", recommendationRoute);
 }
