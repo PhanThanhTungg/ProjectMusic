@@ -3,18 +3,27 @@ import {
   getRecommendations, 
   getUserPreferences, 
   getSimilarSongs, 
-  getRecommendationStats 
+  getRecommendationStats, 
+  getAlbumRecommendation,
+  getArtistRecommendation,
+  getPlaylistRecommendation
 } from "../../controller/client/recommendation.controller";
 import { authAccessToken, checkUser } from "../../middleware/client/auth.middleware";
 
 const router = Router();
 
-router.get("/", authAccessToken, getRecommendations);
+router.get("/", checkUser, getRecommendations);
 
-router.get("/preferences", authAccessToken, getUserPreferences);
+router.get("/album", checkUser, getAlbumRecommendation);
 
-router.get("/similar/:songId", checkUser, getSimilarSongs);
+router.get("/artist", checkUser, getArtistRecommendation);
 
-router.get("/stats", getRecommendationStats);
+router.get("/playlist", checkUser, getPlaylistRecommendation);
+
+// router.get("/preferences", authAccessToken, getUserPreferences);
+
+// router.get("/similar/:songId", checkUser, getSimilarSongs);
+
+// router.get("/stats", getRecommendationStats);
 
 export default router;

@@ -42,6 +42,16 @@ const userSchema = new mongoose.Schema({
       ref: "playlist"
     }
   ],
+  artistsFollowed:[
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user"
+    }
+  ],
+  followCount: {
+    type: Number,
+    default: 0
+  },
   verifyArtist:{
     type: Boolean,
     default: false

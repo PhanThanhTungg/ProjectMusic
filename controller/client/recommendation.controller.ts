@@ -1,38 +1,129 @@
 import { Request, Response } from "express";
-import {  
-  getHybridRecommendations, 
-  getCollaborativeRecommendations, 
-  getContentBasedRecommendations, 
-  getTrendingRecommendations
+import {
+  getHybridRecommendations,
+  getCollaborativeRecommendations,
+  getContentBasedRecommendations,
+  getTrendingRecommendations,
 } from "../../helper/recommendation.helper";
 import { resError1 } from "../../helper/resError.helper";
-import { 
-  getRecommendationsSchema, 
-  getSimilarSongsSchema, 
-  getUserPreferencesSchema 
+import {
+  getRecommendationsSchema,
+  getSimilarSongsSchema,
+  getUserPreferencesSchema,
 } from "../../schema/client/recommendation.schema";
-import { 
-  RecommendationResponse, 
-  UserPreferencesResponse, 
-  SimilarSongsResponse 
+import {
+  RecommendationResponse,
+  UserPreferencesResponse,
+  SimilarSongsResponse,
 } from "../../interfaces/client/recommendation.interface";
 import songModel from "../../model/song.model";
 import playHistoryModel from "../../model/playHistory.model";
 import mongoose from "mongoose";
+import albumModel from "../../model/album.model";
+import paginationHelper from "../../helper/pagination.helper";
+import { SuccessResponse } from "../../interfaces/common/response.interface";
+import userModel from "../../model/user.model";
+import playlistModel from "../../model/playlist.model";
 
 // get recommendations
-export const getRecommendations = async (req: Request, res: Response): Promise<any> => {
+export const getRecommendations = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
   try {
     const user = res.locals.user;
-    
+    if (!user) {
+      const pipeline: any[] = [
+        {
+          $match: {
+            status: "active",
+            deleted: false,
+          },
+        },
+        {
+          $lookup: {
+            from: "User",
+            localField: "artistId",
+            foreignField: "_id",
+            as: "artistId",
+          },
+        },
+        {
+          $unwind: "$artistId",
+        },
+        {
+          $lookup: {
+            from: "User",
+            localField: "collaborationArtistIds",
+            foreignField: "_id",
+            as: "collaborationArtistIds",
+          },
+        },
+        {
+          $lookup: {
+            from: "Album",
+            localField: "albumId",
+            foreignField: "_id",
+            as: "albumId",
+          },
+        },
+        {
+          $unwind: {
+            path: "$albumId",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "Genre",
+            localField: "genreId",
+            foreignField: "_id",
+            as: "genreId",
+          },
+        },
+        {
+          $unwind: {
+            path: "$genreId",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+      ];
+
+      pipeline.push(
+        {
+          $sort: { playCount: -1 },
+        },
+        {
+          $limit: 20,
+        }
+      );
+
+      const topSongs = await songModel.aggregate(pipeline);
+
+      const response: RecommendationResponse = {
+        message: "Recommendations retrieved successfully",
+        recommendations: topSongs,
+        total: topSongs.length,
+        type: "top-songs",
+        generatedAt: new Date(),
+      };
+  
+      return res.status(200).json(response);
+    }
     // validate input
     const validationResult = getRecommendationsSchema.safeParse({
       type: req.query.type || "hybrid",
-      limit: req.query.limit ? parseInt(req.query.limit as string) : 20
+      limit: req.query.limit ? parseInt(req.query.limit as string) : 20,
     });
-    if (!validationResult.success) return resError1(validationResult.error, JSON.parse(validationResult.error.message)[0].message, res, 400);
-    
-    const { type, limit} = validationResult.data;
+    if (!validationResult.success)
+      return resError1(
+        validationResult.error,
+        JSON.parse(validationResult.error.message)[0].message,
+        res,
+        400
+      );
+
+    const { type, limit } = validationResult.data;
     let recommendations;
 
     // call algorithm corresponding
@@ -52,41 +143,138 @@ export const getRecommendations = async (req: Request, res: Response): Promise<a
         break;
     }
 
-    const responseSong = recommendations.map(recommendation => recommendation.song);
+    const responseSong = recommendations.map(
+      (recommendation) => recommendation.song
+    );
     const response: RecommendationResponse = {
       message: "Recommendations retrieved successfully",
       recommendations: responseSong,
       total: recommendations.length,
       type,
-      generatedAt: new Date()
+      generatedAt: new Date(),
     };
 
     return res.status(200).json(response);
-
   } catch (error) {
     console.error("Error in getRecommendations:", error);
     return resError1(error, error.message || "Internal server error", res, 500);
   }
 };
 
+// get album recommendation
+export const getAlbumRecommendation = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const page = req.query.page ? parseInt(req.query.page as string) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    const objectPagination = paginationHelper(
+      page,
+      limit,
+      await albumModel.countDocuments({ deleted: false })
+    );
+
+    const albumRecommendations = await albumModel.find({
+      deleted: false,
+    }).sort({followCount: -1}).skip(objectPagination.skip).limit(objectPagination.limit)
+    .populate("idArtist", "fullName avatar");
+
+    const response: SuccessResponse = {
+      message: "Album recommendations retrieved successfully",
+      albumRecommendations,
+    };
+    return res.status(200).json(response);
+  } catch (error) {
+    return resError1(error, error.message || "Internal server error", res, 500);
+  }
+};
+
+// get artist recommendation
+export const getArtistRecommendation = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    const page = req.query.page ? parseInt(req.query.page as string) : 1;
+    const objectPagination = paginationHelper(
+      page,
+      limit,
+      await userModel.countDocuments({ deleted: false, verifyArtist: true })
+    );
+    
+    const artistRecommendations = await userModel.find({
+      deleted: false,
+      verifyArtist: true,
+    }).sort({followCount: -1}).skip(objectPagination.skip).limit(objectPagination.limit);
+
+    const response: SuccessResponse = {
+      message: "Artist recommendations retrieved successfully",
+      artistRecommendations,
+    };
+    return res.status(200).json(response);
+  } catch (error) {
+    return resError1(error, error.message || "Internal server error", res, 500);
+  }
+};
+
+// get playlist recommendation
+export const getPlaylistRecommendation = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    const page = req.query.page ? parseInt(req.query.page as string) : 1;
+    const objectPagination = paginationHelper(
+      page,
+      limit,
+      await playlistModel.countDocuments({ deleted: false })
+    );
+
+    const playlistRecommendations = await playlistModel.find({
+      status: "public",
+    }).sort({followCount: -1}).skip(objectPagination.skip).limit(objectPagination.limit)
+    .populate("idUser", "fullName avatar")
+    .select("-songs");
+
+    const response: SuccessResponse = {
+      message: "Playlist recommendations retrieved successfully",
+      playlistRecommendations,
+    };
+    return res.status(200).json(response);
+  } catch (error) {
+    return resError1(error, error.message || "Internal server error", res, 500);
+  }
+};
+
 // get user preferences
-export const getUserPreferences = async (req: Request, res: Response): Promise<any> => {
+export const getUserPreferences = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
   try {
     const user = res.locals.user;
     if (!user) {
-      return resError1(new Error("User not authenticated"), "User not authenticated", res, 401);
+      return resError1(
+        new Error("User not authenticated"),
+        "User not authenticated",
+        res,
+        401
+      );
     }
 
     // Validate input
     const validationResult = getUserPreferencesSchema.safeParse({
-      days: req.query.days ? parseInt(req.query.days as string) : 30
+      days: req.query.days ? parseInt(req.query.days as string) : 30,
     });
 
     if (!validationResult.success) {
       return resError1(
-        validationResult.error, 
-        JSON.parse(validationResult.error.message)[0].message, 
-        res, 
+        validationResult.error,
+        JSON.parse(validationResult.error.message)[0].message,
+        res,
         400
       );
     }
@@ -96,20 +284,31 @@ export const getUserPreferences = async (req: Request, res: Response): Promise<a
     startDate.setDate(startDate.getDate() - days);
 
     // Lấy thống kê chi tiết về sở thích
-    const playHistory = await playHistoryModel.find({
-      userId: new mongoose.Types.ObjectId(user.id),
-      playDate: { $gte: startDate }
-    }).populate('songId', 'title genreId artistId');
+    const playHistory = await playHistoryModel
+      .find({
+        userId: new mongoose.Types.ObjectId(user.id),
+        playDate: { $gte: startDate },
+      })
+      .populate("songId", "title genreId artistId");
 
     // Phân tích genre yêu thích
-    const genreStats = new Map<string, { genreId: string; genreName: string; playCount: number }>();
-    const artistStats = new Map<string, { artistId: string; artistName: string; playCount: number }>();
-    const songStats = new Map<string, { songId: string; title: string; playCount: number }>();
-    
+    const genreStats = new Map<
+      string,
+      { genreId: string; genreName: string; playCount: number }
+    >();
+    const artistStats = new Map<
+      string,
+      { artistId: string; artistName: string; playCount: number }
+    >();
+    const songStats = new Map<
+      string,
+      { songId: string; title: string; playCount: number }
+    >();
+
     let totalPlayTime = 0;
     let totalPlays = 0;
 
-    playHistory.forEach(history => {
+    playHistory.forEach((history) => {
       const song = history.songId as any;
       if (!song) return;
 
@@ -119,8 +318,12 @@ export const getUserPreferences = async (req: Request, res: Response): Promise<a
       // Genre stats
       const genreId = song.genreId?.toString();
       if (genreId) {
-        const genreName = (song.genreId as any)?.title || 'Unknown Genre';
-        const current = genreStats.get(genreId) || { genreId, genreName, playCount: 0 };
+        const genreName = (song.genreId as any)?.title || "Unknown Genre";
+        const current = genreStats.get(genreId) || {
+          genreId,
+          genreName,
+          playCount: 0,
+        };
         current.playCount++;
         genreStats.set(genreId, current);
       }
@@ -128,15 +331,23 @@ export const getUserPreferences = async (req: Request, res: Response): Promise<a
       // Artist stats
       const artistId = song.artistId?.toString();
       if (artistId) {
-        const artistName = (song.artistId as any)?.fullName || 'Unknown Artist';
-        const current = artistStats.get(artistId) || { artistId, artistName, playCount: 0 };
+        const artistName = (song.artistId as any)?.fullName || "Unknown Artist";
+        const current = artistStats.get(artistId) || {
+          artistId,
+          artistName,
+          playCount: 0,
+        };
         current.playCount++;
         artistStats.set(artistId, current);
       }
 
       // Song stats
       const songId = song._id.toString();
-      const current = songStats.get(songId) || { songId, title: song.title, playCount: 0 };
+      const current = songStats.get(songId) || {
+        songId,
+        title: song.title,
+        playCount: 0,
+      };
       current.playCount++;
       songStats.set(songId, current);
     });
@@ -161,12 +372,11 @@ export const getUserPreferences = async (req: Request, res: Response): Promise<a
         favoriteArtists,
         recentSongs,
         totalPlayTime,
-        averagePlayDuration: totalPlays > 0 ? totalPlayTime / totalPlays : 0
-      }
+        averagePlayDuration: totalPlays > 0 ? totalPlayTime / totalPlays : 0,
+      },
     };
 
     return res.status(200).json(response);
-
   } catch (error) {
     console.error("Error in getUserPreferences:", error);
     return resError1(error, error.message || "Internal server error", res, 500);
@@ -174,19 +384,22 @@ export const getUserPreferences = async (req: Request, res: Response): Promise<a
 };
 
 // get similar songs by song id
-export const getSimilarSongs = async (req: Request, res: Response): Promise<any> => {
+export const getSimilarSongs = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
   try {
     // Validate input
     const validationResult = getSimilarSongsSchema.safeParse({
       songId: req.params.songId,
-      limit: req.query.limit ? parseInt(req.query.limit as string) : 10
+      limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
     });
 
     if (!validationResult.success) {
       return resError1(
-        validationResult.error, 
-        JSON.parse(validationResult.error.message)[0].message, 
-        res, 
+        validationResult.error,
+        JSON.parse(validationResult.error.message)[0].message,
+        res,
         400
       );
     }
@@ -194,38 +407,40 @@ export const getSimilarSongs = async (req: Request, res: Response): Promise<any>
     const { songId, limit } = validationResult.data;
 
     // Tìm bài hát gốc
-    const originalSong = await songModel.findById(songId)
-      .populate('artistId', 'fullName avatar')
-      .populate('genreId', 'title')
-      .populate('albumId', 'title thumbnail');
+    const originalSong = await songModel
+      .findById(songId)
+      .populate("artistId", "fullName avatar")
+      .populate("genreId", "title")
+      .populate("albumId", "title thumbnail");
 
     if (!originalSong) {
       return resError1(new Error("Song not found"), "Song not found", res, 404);
     }
 
     // Tìm bài hát tương tự dựa trên genre và artist
-    const similarSongs = await songModel.find({
-      $and: [
-        { _id: { $ne: new mongoose.Types.ObjectId(songId) } },
-        { deleted: false },
-        { status: "active" },
-        {
-          $or: [
-            { genreId: originalSong.genreId },
-            { artistId: originalSong.artistId },
-            { collaborationArtistIds: originalSong.artistId }
-          ]
-        }
-      ]
-    })
-    .populate('artistId', 'fullName avatar')
-    .populate('genreId', 'title')
-    .populate('albumId', 'title thumbnail')
-    .sort({ playCount: -1, createdAt: -1 })
-    .limit(limit * 2); // Lấy nhiều hơn để filter
+    const similarSongs = await songModel
+      .find({
+        $and: [
+          { _id: { $ne: new mongoose.Types.ObjectId(songId) } },
+          { deleted: false },
+          { status: "active" },
+          {
+            $or: [
+              { genreId: originalSong.genreId },
+              { artistId: originalSong.artistId },
+              { collaborationArtistIds: originalSong.artistId },
+            ],
+          },
+        ],
+      })
+      .populate("artistId", "fullName avatar")
+      .populate("genreId", "title")
+      .populate("albumId", "title thumbnail")
+      .sort({ playCount: -1, createdAt: -1 })
+      .limit(limit * 2); // Lấy nhiều hơn để filter
 
     // Tính điểm tương tự
-    const scoredSongs = similarSongs.map(song => {
+    const scoredSongs = similarSongs.map((song) => {
       let score = 0;
       let reason = "";
 
@@ -253,7 +468,7 @@ export const getSimilarSongs = async (req: Request, res: Response): Promise<any>
       return {
         song,
         score: Math.min(score, 1.0),
-        reason: reason || "Similar content"
+        reason: reason || "Similar content",
       };
     });
 
@@ -266,11 +481,12 @@ export const getSimilarSongs = async (req: Request, res: Response): Promise<any>
       message: "Similar songs retrieved successfully",
       similarSongs: topSimilarSongs,
       total: topSimilarSongs.length,
-      basedOn: `"${originalSong.title}" by ${(originalSong.artistId as any)?.fullName || 'Unknown Artist'}`
+      basedOn: `"${originalSong.title}" by ${
+        (originalSong.artistId as any)?.fullName || "Unknown Artist"
+      }`,
     };
 
     return res.status(200).json(response);
-
   } catch (error) {
     console.error("Error in getSimilarSongs:", error);
     return resError1(error, error.message || "Internal server error", res, 500);
@@ -278,89 +494,96 @@ export const getSimilarSongs = async (req: Request, res: Response): Promise<any>
 };
 
 // get recommendation stats
-export const getRecommendationStats = async (req: Request, res: Response): Promise<any> => {
+export const getRecommendationStats = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
   try {
     // Thống kê tổng quan
     const [totalUsers, totalSongs, totalPlays] = await Promise.all([
-      mongoose.connection.db.collection('users').countDocuments({ deleted: false }),
-      mongoose.connection.db.collection('songs').countDocuments({ deleted: false, status: "active" }),
-      mongoose.connection.db.collection('playhistories').countDocuments()
+      mongoose.connection.db
+        .collection("users")
+        .countDocuments({ deleted: false }),
+      mongoose.connection.db
+        .collection("songs")
+        .countDocuments({ deleted: false, status: "active" }),
+      mongoose.connection.db.collection("playhistories").countDocuments(),
     ]);
 
     // Genre phổ biến nhất
     const mostPopularGenre = await playHistoryModel.aggregate([
       {
         $lookup: {
-          from: 'songs',
-          localField: 'songId',
-          foreignField: '_id',
-          as: 'song'
-        }
+          from: "songs",
+          localField: "songId",
+          foreignField: "_id",
+          as: "song",
+        },
       },
       {
-        $unwind: '$song'
+        $unwind: "$song",
       },
       {
         $lookup: {
-          from: 'genres',
-          localField: 'song.genreId',
-          foreignField: '_id',
-          as: 'genre'
-        }
+          from: "genres",
+          localField: "song.genreId",
+          foreignField: "_id",
+          as: "genre",
+        },
       },
       {
-        $unwind: '$genre'
+        $unwind: "$genre",
       },
       {
         $group: {
-          _id: '$genre.title',
-          playCount: { $sum: 1 }
-        }
+          _id: "$genre.title",
+          playCount: { $sum: 1 },
+        },
       },
       {
-        $sort: { playCount: -1 }
+        $sort: { playCount: -1 },
       },
       {
-        $limit: 1
-      }
+        $limit: 1,
+      },
     ]);
 
     // Artist phổ biến nhất
     const mostPopularArtist = await playHistoryModel.aggregate([
       {
         $lookup: {
-          from: 'songs',
-          localField: 'songId',
-          foreignField: '_id',
-          as: 'song'
-        }
+          from: "songs",
+          localField: "songId",
+          foreignField: "_id",
+          as: "song",
+        },
       },
       {
-        $unwind: '$song'
+        $unwind: "$song",
       },
       {
         $lookup: {
-          from: 'users',
-          localField: 'song.artistId',
-          foreignField: '_id',
-          as: 'artist'
-        }
+          from: "users",
+          localField: "song.artistId",
+          foreignField: "_id",
+          as: "artist",
+        },
       },
       {
-        $unwind: '$artist'
+        $unwind: "$artist",
       },
       {
         $group: {
-          _id: '$artist.fullName',
-          playCount: { $sum: 1 }
-        }
+          _id: "$artist.fullName",
+          playCount: { $sum: 1 },
+        },
       },
       {
-        $sort: { playCount: -1 }
+        $sort: { playCount: -1 },
       },
       {
-        $limit: 1
-      }
+        $limit: 1,
+      },
     ]);
 
     const response = {
@@ -371,12 +594,11 @@ export const getRecommendationStats = async (req: Request, res: Response): Promi
         totalPlays,
         averageRecommendationScore: 0.75, // Có thể tính toán thực tế
         mostPopularGenre: mostPopularGenre[0]?._id || "Unknown",
-        mostPopularArtist: mostPopularArtist[0]?._id || "Unknown"
-      }
+        mostPopularArtist: mostPopularArtist[0]?._id || "Unknown",
+      },
     };
 
     return res.status(200).json(response);
-
   } catch (error) {
     console.error("Error in getRecommendationStats:", error);
     return resError1(error, error.message || "Internal server error", res, 500);

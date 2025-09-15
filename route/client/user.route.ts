@@ -19,4 +19,6 @@ route.get("/:id", controller.getUser);
 
 route.patch("/", authAccessToken, userValidate.updateUser,controller.updateUser);
 
+route.patch("/follow/:idArtist", authAccessToken, controller.followArtist);
+
 export default route;
