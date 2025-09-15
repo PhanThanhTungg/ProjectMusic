@@ -52,9 +52,10 @@ export const getRecommendations = async (req: Request, res: Response): Promise<a
         break;
     }
 
+    const responseSong = recommendations.map(recommendation => recommendation.song);
     const response: RecommendationResponse = {
       message: "Recommendations retrieved successfully",
-      recommendations,
+      recommendations: responseSong,
       total: recommendations.length,
       type,
       generatedAt: new Date()

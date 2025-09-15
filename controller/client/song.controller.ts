@@ -557,18 +557,18 @@ export const getTopSongsByPlayCount = async (
           from: "User",
           localField: "artistId",
           foreignField: "_id",
-          as: "artist"
+          as: "artistId"
         }
       },
       {
-        $unwind: "$artist"
+        $unwind: "$artistId"
       },
       {
         $lookup: {
           from: "User",
           localField: "collaborationArtistIds",
           foreignField: "_id",
-          as: "collaborationArtists"
+          as: "collaborationArtistIds"
         }
       },
       {
@@ -576,12 +576,12 @@ export const getTopSongsByPlayCount = async (
           from: "Album",
           localField: "albumId",
           foreignField: "_id",
-          as: "album"
+          as: "albumId"
         }
       },
       {
         $unwind: {
-          path: "$album",
+          path: "$albumId",
           preserveNullAndEmptyArrays: true
         }
       },
@@ -590,12 +590,12 @@ export const getTopSongsByPlayCount = async (
           from: "Genre",
           localField: "genreId",
           foreignField: "_id",
-          as: "genre"
+          as: "genreId"
         }
       },
       {
         $unwind: {
-          path: "$genre",
+          path: "$genreId",
           preserveNullAndEmptyArrays: true
         }
       }
@@ -604,7 +604,7 @@ export const getTopSongsByPlayCount = async (
     if (country) {
       pipeline.push({
         $match: {
-          "artist.country": country
+          "artistId.country": country
         }
       });
     }
