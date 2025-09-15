@@ -153,7 +153,8 @@ export const getTrendingRecommendations = async (
     status: "active"
   }).populate('artistId', 'fullName avatar')
     .populate('genreId', 'title')
-    .populate('albumId', 'title thumbnail');
+    .populate('albumId', 'title thumbnail')
+    .populate('collaborationArtistIds', 'fullName avatar');
 
   const recommendations: RecommendationResult[] = songs.map(song => ({
     song,
@@ -270,7 +271,8 @@ const getSongsFromSimilarUsers = async (
     status: "active"
   }).populate('artistId', 'fullName avatar')
     .populate('genreId', 'title')
-    .populate('albumId', 'title thumbnail');
+    .populate('albumId', 'title thumbnail')
+    .populate('collaborationArtistIds', 'fullName avatar');
 
   return songs.map(song => ({
     song,
@@ -296,6 +298,7 @@ const getSongsByGenres = async (
   .populate('artistId', 'fullName avatar')
   .populate('genreId', 'title')
   .populate('albumId', 'title thumbnail')
+  .populate('collaborationArtistIds', 'fullName avatar')
   .sort({ playCount: -1, createdAt: -1 })
   .limit(limit);
 
@@ -326,6 +329,7 @@ const getSongsByArtists = async (
   .populate('artistId', 'fullName avatar')
   .populate('genreId', 'title')
   .populate('albumId', 'title thumbnail')
+  .populate('collaborationArtistIds', 'fullName avatar')
   .sort({ playCount: -1, createdAt: -1 })
   .limit(limit);
 

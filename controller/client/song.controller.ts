@@ -222,7 +222,10 @@ export const getMySong = async (req: Request, res: Response): Promise<any> => {
       })
       .sort(sort)
       .skip(objectPagination.skip)
-      .limit(objectPagination.limit);
+      .limit(objectPagination.limit)
+      .populate("collaborationArtistIds", "fullName")
+      .populate("albumId", "title slug")
+      .populate("artistId", "fullName");
 
     const response: GetMySongInterface = {
       message: "Songs found",

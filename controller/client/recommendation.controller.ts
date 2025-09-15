@@ -60,6 +60,12 @@ export const getRecommendations = async (
           },
         },
         {
+          $unwind: {
+            path: "$collaborationArtistIds",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
           $lookup: {
             from: "Album",
             localField: "albumId",
@@ -94,7 +100,7 @@ export const getRecommendations = async (
           $sort: { playCount: -1 },
         },
         {
-          $limit: 20,
+          $limit: req.query.limit ? parseInt(req.query.limit+"") : 20,
         }
       );
 
