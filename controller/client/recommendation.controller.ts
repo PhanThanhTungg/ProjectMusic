@@ -10,6 +10,7 @@ import {
   getRecommendationsSchema,
   getSimilarSongsSchema,
   getUserPreferencesSchema,
+  getRecommendationsFromSongsSchema,
 } from "../../schema/client/recommendation.schema";
 import {
   RecommendationResponse,
@@ -601,6 +602,145 @@ export const getRecommendationStats = async (
     return res.status(200).json(response);
   } catch (error) {
     console.error("Error in getRecommendationStats:", error);
+    return resError1(error, error.message || "Internal server error", res, 500);
+  }
+};
+
+// recommend from provided song ids
+export const getRecommendationsFromSongs = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const validationResult = getRecommendationsFromSongsSchema.safeParse({
+      songIds: req.body.songIds,
+      limit: req.body.limit ? parseInt(req.body.limit + "") : 10,
+    });
+
+    if (!validationResult.success) {
+      return resError1(
+        validationResult.error,
+        JSON.parse(validationResult.error.message)[0].message,
+        res,
+        400
+      );
+    }
+
+    const { songIds, limit } = validationResult.data;
+
+    // Lấy thông tin các bài hát gốc để suy luận genre/artist
+    const seeds = await songModel
+      .find({
+        _id: { $in: songIds.map((id: string) => new mongoose.Types.ObjectId(id)) },
+        deleted: false,
+        status: "active",
+      })
+      .select("genreId artistId collaborationArtistIds")
+      .lean();
+
+    if (seeds.length === 0) {
+      const response: RecommendationResponse = {
+        message: "No valid seed songs found",
+        recommendations: [],
+        total: 0,
+        type: "from-songs",
+        generatedAt: new Date(),
+      };
+      return res.status(200).json(response);
+    }
+
+    const genreIds = Array.from(
+      new Set(
+        seeds
+          .map((s: any) => s.genreId?.toString())
+          .filter((v: any) => Boolean(v))
+      )
+    );
+
+    const artistIds = Array.from(
+      new Set(
+        seeds
+          .flatMap((s: any) => [s.artistId, ...(s.collaborationArtistIds || [])])
+          .filter((v: any) => Boolean(v))
+          .map((v: any) => v.toString())
+      )
+    );
+
+    // Truy vấn bài hát liên quan dựa trên genre/artist, loại trừ seed
+    const relatedSongs = await songModel
+      .find({
+        deleted: false,
+        status: "active",
+        _id: {
+          $nin: songIds.map((id: string) => new mongoose.Types.ObjectId(id)),
+        },
+        $or: [
+          genreIds.length
+            ? { genreId: { $in: genreIds.map((id) => new mongoose.Types.ObjectId(id)) } }
+            : undefined,
+          artistIds.length
+            ? {
+                $or: [
+                  { artistId: { $in: artistIds.map((id) => new mongoose.Types.ObjectId(id)) } },
+                  { collaborationArtistIds: { $in: artistIds.map((id) => new mongoose.Types.ObjectId(id)) } },
+                ],
+              }
+            : undefined,
+        ].filter(Boolean) as any,
+      })
+      .populate("artistId", "fullName avatar")
+      .populate("genreId", "title")
+      .populate("albumId", "title thumbnail")
+      .populate("collaborationArtistIds", "fullName avatar")
+      .sort({ playCount: -1, createdAt: -1 })
+      .limit(limit * 3) // lấy nhiều hơn để chấm điểm
+      .lean();
+
+    // Chấm điểm dựa trên mức độ trùng khớp với seeds
+    const seedGenreSet = new Set(genreIds);
+    const seedArtistSet = new Set(artistIds);
+
+    const scored = relatedSongs.map((song: any) => {
+      let score = 0;
+
+      if (song.genreId && seedGenreSet.has(song.genreId.toString())) {
+        score += 0.5;
+      }
+
+      const songArtistIds = new Set([
+        song.artistId?.toString(),
+        ...(song.collaborationArtistIds || []).map((a: any) => a.toString()),
+      ].filter(Boolean));
+
+      for (const a of songArtistIds) {
+        if (seedArtistSet.has(a)) {
+          score += 0.4;
+          break;
+        }
+      }
+
+      // Ưu tiên bài có playCount cao hơn một chút
+      score += Math.min((song.playCount || 0) / 2000, 0.1);
+
+      return { song, score };
+    });
+
+    const top = scored
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map((s) => s.song);
+
+    const response: RecommendationResponse = {
+      message: "Recommendations from songs retrieved successfully",
+      recommendations: top,
+      total: top.length,
+      type: "from-songs",
+      generatedAt: new Date(),
+    };
+
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error("Error in getRecommendationsFromSongs:", error);
     return resError1(error, error.message || "Internal server error", res, 500);
   }
 };

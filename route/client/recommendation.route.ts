@@ -6,7 +6,8 @@ import {
   getRecommendationStats, 
   getAlbumRecommendation,
   getArtistRecommendation,
-  getPlaylistRecommendation
+  getPlaylistRecommendation,
+  getRecommendationsFromSongs
 } from "../../controller/client/recommendation.controller";
 import { authAccessToken, checkUser } from "../../middleware/client/auth.middleware";
 
@@ -19,6 +20,8 @@ router.get("/album", checkUser, getAlbumRecommendation);
 router.get("/artist", checkUser, getArtistRecommendation);
 
 router.get("/playlist", checkUser, getPlaylistRecommendation);
+
+router.post("/by-songs", getRecommendationsFromSongs);
 
 // router.get("/preferences", authAccessToken, getUserPreferences);
 
