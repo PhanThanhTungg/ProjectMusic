@@ -351,3 +351,25 @@ export const followArtist = async (
     return resError1(error, "Internal server error", res);
   }
 };
+
+export const getFollowArtists = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const user = res.locals.user;
+    const artists = await User.find({
+      _id: { $in: user.artistsFollowed },
+      deleted: false,
+      status: "active",
+      verifyArtist: true,
+    });
+    const response: SuccessResponse = {
+      message: "Follow artists found",
+      artists,
+    };
+    return res.status(200).json(response);
+  } catch (error) {
+    return resError1(error, "Internal server error", res);
+  }
+};

@@ -60,12 +60,6 @@ export const getRecommendations = async (
           },
         },
         {
-          $unwind: {
-            path: "$collaborationArtistIds",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
           $lookup: {
             from: "Album",
             localField: "albumId",
