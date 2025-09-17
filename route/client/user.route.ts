@@ -15,7 +15,6 @@ route.post("/auth/logout", controller.logout);
 
 route.get("/artists", authAccessToken, controller.getAllArtists);
 
-
 route.get("/:id", controller.getUser);
 
 route.patch("/", authAccessToken, userValidate.updateUser,controller.updateUser);

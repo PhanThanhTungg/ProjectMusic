@@ -121,9 +121,9 @@ export const getAll = async (req: Request, res: Response): Promise<any> => {
         status: "active",
         deleted: false,
       })
-      .populate("artistId", "fullName")
+      .populate("artistId", "fullName avatar")
       .populate("albumId", "title slug")
-      .populate("collaborationArtistIds", "fullName")
+      .populate("collaborationArtistIds", "fullName avatar")
       .select("-background -description -lyrics -updatedAt -__v");
 
     const response: SuccessResponse = {
@@ -144,9 +144,9 @@ export const getDetail = async (req: Request, res: Response): Promise<any> => {
         status: "active",
         deleted: false,
       })
-      .populate("artistId", "fullName")
+      .populate("artistId", "fullName avatar")
       .populate("albumId", "title slug")
-      .populate("collaborationArtistIds", "fullName");
+      .populate("collaborationArtistIds", "fullName avatar");
 
     if (!song) return resError1(null, "Song not found", res, 404);
 
