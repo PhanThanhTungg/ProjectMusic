@@ -104,9 +104,31 @@ export const create = async (req: Request, res: Response): Promise<any> => {
       }),
     });
 
+    // Lấy chi tiết thông tin của bài hát vừa tạo
+    const songWithDetails = await songModel
+      .findById(song._id)
+      .populate([
+        {
+          path: "artistId",
+          select: "fullName avatar",
+        },
+        {
+          path: "albumId",
+          select: "title slug thumbnail",
+        },
+        {
+          path: "collaborationArtistIds",
+          select: "fullName avatar",
+        },
+        {
+          path: "genreId",
+          select: "title",
+        },
+      ]);
+
     const response: SuccessResponse = {
       message: "Song created successfully",
-      data: song,
+      data: songWithDetails,
     };
     return res.status(200).json(response);
   } catch (error) {
@@ -392,7 +414,24 @@ export const update = async (req: Request, res: Response): Promise<any> => {
       req.params.id,
       updateSongData.data,
       { new: true }
-    );
+    ).populate([
+      {
+        path: "artistId",
+        select: "fullName avatar",
+      },
+      {
+        path: "albumId",
+        select: "title slug thumbnail",
+      },
+      {
+        path: "collaborationArtistIds",
+        select: "fullName avatar",
+      },
+      {
+        path: "genreId",
+        select: "title",
+      },
+    ]);
 
     const response: SuccessResponse = {
       message: "Song updated successfully",
